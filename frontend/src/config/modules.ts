@@ -1,0 +1,60 @@
+import type { ModuleInfo } from '@/types';
+
+export const MODULES: ModuleInfo[] = [
+  {
+    key: 'orders',
+    title: 'Приемка заказов',
+    description: 'Управление входящими заказами, создание и обработка заявок',
+    path: '/orders',
+    icon: 'ClipboardList',
+    color: '#3b82f6',
+  },
+  {
+    key: 'production',
+    title: 'Сваривание',
+    description: 'Контроль производственного процесса и этапов сваривания',
+    path: '/production',
+    icon: 'Flame',
+    color: '#f59e0b',
+  },
+  {
+    key: 'materials',
+    title: 'Учет материалов',
+    description: 'Складской учет материалов и комплектующих',
+    path: '/materials',
+    icon: 'Package',
+    color: '#8b5cf6',
+  },
+  {
+    key: 'packaging',
+    title: 'Фасовка',
+    description: 'Управление процессом фасовки готовой продукции',
+    path: '/packaging',
+    icon: 'BoxSelect',
+    color: '#10b981',
+  },
+  {
+    key: 'shipping',
+    title: 'Отгрузка и накладные',
+    description: 'Формирование накладных и контроль отгрузки',
+    path: '/shipping',
+    icon: 'Truck',
+    color: '#06b6d4',
+  },
+  {
+    key: 'payments',
+    title: 'Оплата и дебиторка',
+    description: 'Учет оплат и управление дебиторской задолженностью',
+    path: '/payments',
+    icon: 'Wallet',
+    color: '#ec4899',
+  },
+  {
+    key: 'claims',
+    title: 'Рекламации',
+    description: 'Работа с рекламациями и претензиями клиентов',
+    path: '/claims',
+    icon: 'AlertTriangle',
+    color: '#ef4444',
+  },
+];
