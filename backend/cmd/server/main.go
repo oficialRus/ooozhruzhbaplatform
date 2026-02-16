@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	fmt.Println("ООО Жрушба — ERP Platform Backend")
+	fmt.Println("ООО Дружба — ERP Platform Backend")
 	fmt.Println("Сервер запускается на :8080...")
 
 	mux := http.NewServeMux()

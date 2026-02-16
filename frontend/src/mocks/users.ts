@@ -16,7 +16,7 @@ export const MOCK_USERS: User[] = [
   },
   {
     id: '2',
-    fullName: 'Петров Алексей Сергеевич',
+    fullName: 'Петрова Екатерина Сергеевна',
     email: 'orders@zhruzhba.ru',
     role: 'orders',
     position: 'Менеджер по заказам',
@@ -24,7 +24,7 @@ export const MOCK_USERS: User[] = [
   },
   {
     id: '3',
-    fullName: 'Сидорова Мария Викторовна',
+    fullName: 'Сидорова Екатерина Викторовна',
     email: 'production@zhruzhba.ru',
     role: 'production',
     position: 'Начальник производства',

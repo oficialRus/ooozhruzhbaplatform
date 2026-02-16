@@ -45,7 +45,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500 text-white text-2xl font-bold mb-4 shadow-lg shadow-primary-500/30">
             Ж
           </div>
-          <h1 className="text-2xl font-bold text-white">ООО Жрушба</h1>
+          <h1 className="text-2xl font-bold text-white">ООО Дружба</h1>
           <p className="text-slate-400 mt-1">Платформа управления предприятием</p>
         </div>
 

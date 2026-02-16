@@ -54,12 +54,14 @@ export default function Sidebar({ className = '' }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10 shrink-0">
-        <div className="w-9 h-9 rounded-lg bg-primary-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-          Ж
-        </div>
+        <img
+          src="/logo.png"
+          alt="ООО Дружба"
+          className="h-9 w-auto max-w-[140px] min-w-0 object-contain"
+        />
         {!collapsed && (
           <span className="text-white font-semibold text-base truncate">
-            ООО Жрушба
+            ООО Дружба
           </span>
         )}
       </div>
