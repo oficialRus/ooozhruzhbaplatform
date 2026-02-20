@@ -11,7 +11,7 @@ export const MODULES: ModuleInfo[] = [
   },
   {
     key: 'production',
-    title: 'Сваривание',
+    title: 'Сыроварение',
     description: 'Контроль производственного процесса и этапов сваривания',
     path: '/production',
     icon: 'Flame',

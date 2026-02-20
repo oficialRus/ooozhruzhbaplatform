@@ -10,7 +10,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { MODULES } from '@/config/modules';
-import { StatCard, ModuleCard, ActivityItem, TaskItem } from '@/components/ui';
+import {
+  StatCard,
+  ModuleCard,
+  ActivityItem,
+  TaskItem,
+  OrderIntakeChart,
+} from '@/components/ui';
 
 const MOCK_STATS = [
   {
@@ -155,10 +161,6 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  const allowedModules = MODULES.filter((m) =>
-    user.allowedModules.includes(m.key)
-  );
-
   const greeting = getGreeting();
 
   return (
@@ -189,24 +191,22 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick stats */}
-      {user.role === 'admin' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {MOCK_STATS.map((stat) => (
-            <StatCard key={stat.title} {...stat} />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {MOCK_STATS.map((stat) => (
+          <StatCard key={stat.title} {...stat} />
+        ))}
+      </div>
 
       {/* Modules grid */}
       <div>
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="w-5 h-5 text-text-secondary" />
           <h3 className="text-lg font-semibold text-text-primary">
-            {user.role === 'admin' ? 'Все разделы' : 'Ваши разделы'}
+            Все разделы
           </h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {allowedModules.map((mod) => (
+          {MODULES.map((mod) => (
             <ModuleCard
               key={mod.key}
               module={mod}
@@ -215,6 +215,8 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
+      <OrderIntakeChart />
 
       {/* Bottom section: Activity + Tasks */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
