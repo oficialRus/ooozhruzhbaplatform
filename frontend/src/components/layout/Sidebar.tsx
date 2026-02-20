@@ -8,6 +8,7 @@ import {
   Truck,
   Wallet,
   AlertTriangle,
+  BarChart3,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -25,6 +26,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Truck,
   Wallet,
   AlertTriangle,
+  BarChart3,
 };
 
 interface SidebarProps {

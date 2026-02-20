@@ -57,4 +57,12 @@ export const MODULES: ModuleInfo[] = [
     icon: 'AlertTriangle',
     color: '#ef4444',
   },
+  {
+    key: 'reports',
+    title: 'Отчеты',
+    description: 'Сводные показатели и аналитические отчеты',
+    path: '/reports',
+    icon: 'BarChart3',
+    color: '#2563eb',
+  },
 ];

@@ -8,6 +8,7 @@ import {
   Truck,
   Wallet,
   AlertTriangle,
+  BarChart3,
 } from 'lucide-react';
 import type { ModuleInfo } from '@/types';
 
@@ -19,6 +20,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Truck,
   Wallet,
   AlertTriangle,
+  BarChart3,
 };
 
 interface ModuleCardProps {
