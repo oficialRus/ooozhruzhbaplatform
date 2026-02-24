@@ -11,7 +11,7 @@ export const MODULES: ModuleInfo[] = [
   },
   {
     key: 'production',
-    title: 'Сваривание',
+    title: 'Сыроварение',
     description: 'Контроль производственного процесса и этапов сваривания',
     path: '/production',
     icon: 'Flame',
@@ -56,5 +56,13 @@ export const MODULES: ModuleInfo[] = [
     path: '/claims',
     icon: 'AlertTriangle',
     color: '#ef4444',
+  },
+  {
+    key: 'reports',
+    title: 'Отчеты',
+    description: 'Сводные показатели и аналитические отчеты',
+    path: '/reports',
+    icon: 'BarChart3',
+    color: '#2563eb',
   },
 ];

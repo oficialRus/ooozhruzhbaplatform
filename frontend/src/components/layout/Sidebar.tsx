@@ -8,6 +8,7 @@ import {
   Truck,
   Wallet,
   AlertTriangle,
+  BarChart3,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -15,7 +16,6 @@ import {
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { MODULES } from '@/config/modules';
-import type { ModuleKey } from '@/types';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard,
@@ -26,6 +26,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Truck,
   Wallet,
   AlertTriangle,
+  BarChart3,
 };
 
 interface SidebarProps {
@@ -37,10 +38,6 @@ export default function Sidebar({ className = '' }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   if (!user) return null;
-
-  const allowedModules = MODULES.filter((m) =>
-    user.allowedModules.includes(m.key as ModuleKey)
-  );
 
   return (
     <aside
@@ -88,7 +85,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         <div className="h-px bg-white/10 my-3 mx-2" />
 
         {/* Module links */}
-        {allowedModules.map((mod) => {
+        {MODULES.map((mod) => {
           const Icon = ICON_MAP[mod.icon] || Package;
           return (
             <NavLink

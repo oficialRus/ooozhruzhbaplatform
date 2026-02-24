@@ -14,9 +14,7 @@ export default function ProtectedRoute({ children, requiredModule }: ProtectedRo
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredModule && !user.allowedModules.includes(requiredModule)) {
-    return <Navigate to="/" replace />;
-  }
+  void requiredModule;
 
   return <>{children}</>;
 }

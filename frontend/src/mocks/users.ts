@@ -2,7 +2,7 @@ import type { User, ModuleKey } from '@/types';
 
 const ALL_MODULES: ModuleKey[] = [
   'dashboard', 'orders', 'production', 'materials',
-  'packaging', 'shipping', 'payments', 'claims',
+  'packaging', 'shipping', 'payments', 'claims', 'reports',
 ];
 
 export const MOCK_USERS: User[] = [
