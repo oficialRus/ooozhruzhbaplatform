@@ -133,7 +133,7 @@ export default function OrdersPage() {
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-4 min-w-[140px]">
-                            <span className="text-sm text-text-primary">Фасовка</span>
+                            <span className="text-sm text-text-primary">Сроки</span>
                             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
                               <Check className="h-3 w-3" strokeWidth={3} />
                             </span>

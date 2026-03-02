@@ -19,6 +19,21 @@ const inputClass =
   'w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 text-text-primary';
 const labelClass = 'block text-sm font-medium text-text-secondary mb-1';
 
+const PACKAGING_GRAM_OPTIONS = [
+  { value: '200', label: '200 г' },
+  { value: '300', label: '300 г' },
+  { value: '1700', label: '1700 г' },
+  { value: '15000', label: '15000 г' },
+];
+
+const PACKAGING_FORMAT_OPTIONS = [
+  'пластиковая упаковка 200 гр',
+  'вакуумная упак. и картон. коробка, 200 гр',
+  'брикет в рассоле 1.7 кг',
+  'брикет в вакууме 1.7 кг',
+  'куботейнер 15кг',
+];
+
 export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOrderModalProps) {
   const [month, setMonth] = useState('');
   const [registrationDate, setRegistrationDate] = useState('');
@@ -29,7 +44,9 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
   const [nomenclatureId, setNomenclatureId] = useState('');
   const [brandId, setBrandId] = useState('');
   const [packagingGrams, setPackagingGrams] = useState('');
+  const [packagingFormat, setPackagingFormat] = useState('');
   const [pricePerUnit, setPricePerUnit] = useState('');
+  const [discount, setDiscount] = useState('');
   const [quantityPackages, setQuantityPackages] = useState('');
   const [quant, setQuant] = useState('');
   const [quantityKg, setQuantityKg] = useState('');
@@ -44,6 +61,14 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
     if (grams && packs) return ((grams * packs) / 1000).toFixed(2);
     return '';
   }, [packagingGrams, quantityPackages]);
+
+  /** Цена за единицу с учётом скидки (для сохранения в заказ и отображения) */
+  const pricePerUnitAfterDiscount = useMemo(() => {
+    const base = Number(pricePerUnit) || 0;
+    const pct = Math.min(100, Math.max(0, Number(discount) || 0));
+    if (pct <= 0) return base.toFixed(2);
+    return (base * (1 - pct / 100)).toFixed(2);
+  }, [pricePerUnit, discount]);
 
   const clientDisplayLabel = useMemo(() => {
     if (!clientId) return 'Выберите клиента';
@@ -74,7 +99,9 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
       nomenclatureName,
       brandName,
       packagingGrams,
-      pricePerUnit,
+      packagingFormat,
+      pricePerUnit: pricePerUnitAfterDiscount,
+      discount,
       quantityPackages,
       quant,
       quantityKg: quantityKg || quantityKgCalculated,
@@ -217,19 +244,52 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
           {/* 6. Единица продукции. ФАСОВКА, грамм */}
           <div>
             <label htmlFor="packagingGrams" className={labelClass}>Единица продукции. ФАСОВКА, грамм</label>
-            <input
+            <select
               id="packagingGrams"
-              type="number"
-              min={0}
-              step={1}
               value={packagingGrams}
               onChange={(e) => setPackagingGrams(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Выберите фасовку</option>
+              {PACKAGING_GRAM_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 6.1 Формат упаковки */}
+          <div>
+            <label htmlFor="packagingFormat" className={labelClass}>Формат упаковки</label>
+            <select
+              id="packagingFormat"
+              value={packagingFormat}
+              onChange={(e) => setPackagingFormat(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Выберите формат упаковки</option>
+              {PACKAGING_FORMAT_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 6.2 Скидка, % */}
+          <div>
+            <label htmlFor="discount" className={labelClass}>Скидка, %</label>
+            <input
+              id="discount"
+              type="number"
+              min={0}
+              max={100}
+              step={0.01}
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
               className={inputClass}
               placeholder="0"
             />
           </div>
 
-          {/* 7. Цена отгрузки за единицу продукции, руб */}
+          {/* 7. Цена отгрузки за единицу продукции, руб (базовая; с учётом скидки — ниже) */}
           <div>
             <label htmlFor="pricePerUnit" className={labelClass}>Цена отгрузки за единицу продукции, руб</label>
             <input
@@ -242,6 +302,11 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
               className={inputClass}
               placeholder="0.00"
             />
+            {discount && Number(discount) > 0 && (
+              <p className="mt-1 text-xs text-text-muted">
+                Цена со скидкой: {pricePerUnitAfterDiscount} руб.
+              </p>
+            )}
           </div>
 
           {/* 8. Кол-во в упаковках, шт. */}

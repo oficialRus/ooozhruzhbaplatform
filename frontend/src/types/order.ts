@@ -6,7 +6,10 @@ export interface Order {
   nomenclatureName: string;
   brandName: string;
   packagingGrams: string;
+  packagingFormat: string;
   pricePerUnit: string;
+  /** Скидка, % (влияет на итоговую цену за единицу) */
+  discount: string;
   quantityPackages: string;
   quant: string;
   quantityKg: string;

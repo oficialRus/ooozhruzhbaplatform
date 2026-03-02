@@ -8,12 +8,14 @@ interface TaskItemProps {
   status: TaskStatus;
   priority: 'low' | 'medium' | 'high';
   dueDate?: string;
+  canChangeStatus?: boolean;
+  onToggleStatus?: () => void;
 }
 
 const STATUS_CONFIG: Record<TaskStatus, { icon: React.ElementType; label: string; color: string }> = {
-  pending: { icon: Circle, label: 'Ожидает', color: '#94a3b8' },
+  pending: { icon: Circle, label: 'Не выполнено', color: '#94a3b8' },
   in_progress: { icon: Clock, label: 'В работе', color: '#f59e0b' },
-  done: { icon: CheckCircle2, label: 'Готово', color: '#22c55e' },
+  done: { icon: CheckCircle2, label: 'Выполнено', color: '#22c55e' },
 };
 
 const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
@@ -22,17 +24,27 @@ const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
   high: { label: 'Высокий', className: 'bg-danger-100 text-danger-600' },
 };
 
-export default function TaskItem({ title, assignee, status, priority, dueDate }: TaskItemProps) {
+export default function TaskItem({
+  title,
+  assignee,
+  status,
+  priority,
+  dueDate,
+  canChangeStatus,
+  onToggleStatus,
+}: TaskItemProps) {
   const statusCfg = STATUS_CONFIG[status];
   const priorityCfg = PRIORITY_CONFIG[priority];
   const StatusIcon = statusCfg.icon;
+  const isInteractive = Boolean(canChangeStatus && onToggleStatus);
 
   return (
-    <div className="flex items-center gap-3 py-3 group">
-      <StatusIcon
-        className="w-5 h-5 shrink-0"
-        style={{ color: statusCfg.color }}
-      />
+    <div
+      className={`flex items-center gap-3 py-3 group ${
+        isInteractive ? 'cursor-pointer hover:bg-slate-50 rounded-lg px-2 -mx-2' : ''
+      }`}
+      onClick={isInteractive ? onToggleStatus : undefined}
+    >
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-text-primary truncate">{title}</p>
         <p className="text-xs text-text-muted">{assignee}</p>
@@ -44,6 +56,13 @@ export default function TaskItem({ title, assignee, status, priority, dueDate }:
         {dueDate && (
           <span className="text-xs text-text-muted">{dueDate}</span>
         )}
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <StatusIcon
+          className="w-5 h-5"
+          style={{ color: statusCfg.color }}
+        />
+        <span className="text-xs text-text-muted">{statusCfg.label}</span>
       </div>
     </div>
   );
