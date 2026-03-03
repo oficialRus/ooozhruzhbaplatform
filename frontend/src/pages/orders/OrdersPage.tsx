@@ -1,7 +1,22 @@
-import { useState, Fragment } from 'react';
-import { ClipboardList, Plus, Search, Filter, Check } from 'lucide-react';
+import { useState, useMemo, Fragment } from 'react';
+import { ClipboardList, Plus, Search, Filter, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Order } from '@/types';
 import NewOrderModal from './NewOrderModal';
+
+function groupOrdersByDateAndClient(orders: Order[]): { key: string; registrationDate: string; clientName: string; orders: Order[] }[] {
+  const map = new Map<string, Order[]>();
+  for (const o of orders) {
+    const key = `${o.registrationDate || ''}|${o.clientName || ''}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(o);
+  }
+  return Array.from(map.entries()).map(([key, ordersInGroup]) => ({
+    key,
+    registrationDate: ordersInGroup[0]?.registrationDate ?? '',
+    clientName: ordersInGroup[0]?.clientName ?? '',
+    orders: ordersInGroup,
+  }));
+}
 
 const STATUS_LABELS: Record<Order['status'], string> = {
   new: 'Новый',
@@ -14,6 +29,7 @@ export default function OrdersPage() {
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const filteredOrders = orders.filter(
     (o) =>
@@ -21,6 +37,17 @@ export default function OrdersPage() {
       o.nomenclatureName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.deliveryCity.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const groups = useMemo(() => groupOrdersByDateAndClient(filteredOrders), [filteredOrders]);
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -96,58 +123,81 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.map((order, index) => (
-                  <Fragment key={order.id}>
-                    <tr className="border-b border-border hover:bg-surface-hover transition-colors">
-                      <td className={`py-3 px-4 text-text-primary ${index > 0 ? 'pt-8' : ''}`}>{order.registrationDate || '—'}</td>
-                      <td className="py-3 px-4 text-text-primary">{order.clientName || '—'}</td>
-                      <td className="py-3 px-4 text-text-primary">{order.nomenclatureName || '—'}</td>
-                      <td className="py-3 px-4 text-text-primary">{order.brandName || '—'}</td>
-                      <td className="py-3 px-4 text-text-primary text-right">{order.quantityKg || '—'}</td>
-                      <td className="py-3 px-4 text-text-primary">{order.deliveryDeadline || '—'}</td>
-                      <td className="py-3 px-4 text-text-primary">{order.deliveryCity || '—'}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                            order.status === 'new'
-                              ? 'bg-primary-100 text-primary-700'
-                              : order.status === 'in_progress'
-                                ? 'bg-warning-100 text-warning-600'
-                                : order.status === 'shipped'
-                                  ? 'bg-accent-100 text-accent-700'
-                                  : 'bg-surface-hover text-text-secondary'
-                          }`}
-                        >
-                          {STATUS_LABELS[order.status]}
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="bg-surface-secondary/50 border-b-4 border-border">
-                      <td colSpan={8} className="px-4 py-4 pb-8 align-top">
-                        <p className="text-xs text-text-muted mb-2">Утверждение заказа.</p>
-                        <div className="flex flex-wrap gap-x-8 gap-y-2">
-                          <div className="flex items-center justify-between gap-4 min-w-[140px]">
-                            <span className="text-sm text-text-primary">Количество</span>
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
-                              <Check className="h-3 w-3" strokeWidth={3} />
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-4 min-w-[140px]">
-                            <span className="text-sm text-text-primary">Сроки</span>
-                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
-                              <Check className="h-3 w-3" strokeWidth={3} />
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                    {index < filteredOrders.length - 1 && (
-                      <tr className="bg-border/30">
-                        <td colSpan={8} className="h-3 p-0" aria-hidden />
+                {groups.map((group) => {
+                  const isExpanded = expandedGroups.has(group.key);
+                  const count = group.orders.length;
+                  const countLabel = count === 1 ? '1 заказ' : count < 5 ? `${count} заказа` : `${count} заказов`;
+                  return (
+                    <Fragment key={group.key}>
+                      <tr
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => toggleGroup(group.key)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleGroup(group.key); } }}
+                        className="border-b border-border hover:bg-surface-hover transition-colors cursor-pointer select-none"
+                        aria-expanded={isExpanded}
+                      >
+                        <td className="py-3 px-4 text-text-primary">{group.registrationDate || '—'}</td>
+                        <td className="py-3 px-4 text-text-primary font-medium">{group.clientName || '—'}</td>
+                        <td className="py-3 px-4 text-text-secondary" colSpan={2}>
+                          <span className="inline-flex items-center gap-1.5">
+                            {isExpanded ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
+                            {countLabel}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4" colSpan={4} />
                       </tr>
-                    )}
-                  </Fragment>
-                ))}
+                      {isExpanded &&
+                        group.orders.map((order) => (
+                          <Fragment key={order.id}>
+                            <tr className="border-b border-border hover:bg-surface-hover/50 transition-colors bg-surface-secondary/30">
+                              <td className="py-2.5 px-4 text-text-muted text-xs w-[1%] whitespace-nowrap" />
+                              <td className="py-2.5 px-4 text-text-muted text-xs w-[1%]" />
+                              <td className="py-2.5 px-4 text-text-primary">{order.nomenclatureName || '—'}</td>
+                              <td className="py-2.5 px-4 text-text-primary">{order.brandName || '—'}</td>
+                              <td className="py-2.5 px-4 text-text-primary text-right">{order.quantityKg || '—'}</td>
+                              <td className="py-2.5 px-4 text-text-primary">{order.deliveryDeadline || '—'}</td>
+                              <td className="py-2.5 px-4 text-text-primary">{order.deliveryCity || '—'}</td>
+                              <td className="py-2.5 px-4">
+                                <span
+                                  className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    order.status === 'new'
+                                      ? 'bg-primary-100 text-primary-700'
+                                      : order.status === 'in_progress'
+                                        ? 'bg-warning-100 text-warning-600'
+                                        : order.status === 'shipped'
+                                          ? 'bg-accent-100 text-accent-700'
+                                          : 'bg-surface-hover text-text-secondary'
+                                  }`}
+                                >
+                                  {STATUS_LABELS[order.status]}
+                                </span>
+                              </td>
+                            </tr>
+                            <tr className="bg-surface-secondary/50 border-b border-border">
+                              <td colSpan={8} className="px-4 py-3 pb-4 align-top pl-12">
+                                <p className="text-xs text-text-muted mb-2">Утверждение заказа.</p>
+                                <div className="flex flex-wrap gap-x-8 gap-y-2">
+                                  <div className="flex items-center justify-between gap-4 min-w-[140px]">
+                                    <span className="text-sm text-text-primary">Количество</span>
+                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
+                                      <Check className="h-3 w-3" strokeWidth={3} />
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between gap-4 min-w-[140px]">
+                                    <span className="text-sm text-text-primary">Сроки</span>
+                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
+                                      <Check className="h-3 w-3" strokeWidth={3} />
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </Fragment>
+                        ))}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
