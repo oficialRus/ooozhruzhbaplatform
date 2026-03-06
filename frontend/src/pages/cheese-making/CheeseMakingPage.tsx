@@ -1,6 +1,6 @@
 import { Flame } from 'lucide-react';
 
-export default function ProductionPage() {
+export default function CheeseMakingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -8,8 +8,8 @@ export default function ProductionPage() {
           <Flame className="w-5 h-5 text-amber-500" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-text-primary">Получение молока</h2>
-          <p className="text-sm text-text-muted">Контроль поступления молока и этапов приёмки</p>
+          <h2 className="text-xl font-bold text-text-primary">Варка сыра</h2>
+          <p className="text-sm text-text-muted">Управление процессом варки сыра</p>
         </div>
       </div>
 
@@ -17,7 +17,7 @@ export default function ProductionPage() {
         <Flame className="w-12 h-12 text-text-muted mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-text-primary mb-2">Модуль в разработке</h3>
         <p className="text-sm text-text-muted max-w-md mx-auto">
-          Здесь будет учёт поступления молока: приёмка, контроль качества, партии.
+          Здесь будет управление процессами варки сыра: запуск партий, отслеживание этапов, контроль качества.
         </p>
       </div>
     </div>

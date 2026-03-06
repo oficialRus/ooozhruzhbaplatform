@@ -57,7 +57,7 @@ export default function OrdersPage() {
             <ClipboardList className="w-5 h-5 text-blue-500" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-text-primary">Приемка заказов</h2>
+            <h2 className="text-xl font-bold text-text-primary">Коммерческие заказы</h2>
             <p className="text-sm text-text-muted">Управление входящими заказами</p>
           </div>
         </div>
@@ -113,6 +113,7 @@ export default function OrdersPage() {
               <thead>
                 <tr className="border-b border-border bg-surface-secondary">
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Дата регистрации</th>
+                  <th className="text-left py-3 px-4 font-medium text-text-secondary">Номер заказа</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Клиент</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Номенклатура</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Бренд</th>
@@ -120,6 +121,8 @@ export default function OrdersPage() {
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Срок поставки</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Город</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Статус</th>
+                  <th className="text-left py-3 px-4 font-medium text-text-secondary">Количество</th>
+                  <th className="text-left py-3 px-4 font-medium text-text-secondary">Сроки</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,6 +141,7 @@ export default function OrdersPage() {
                         aria-expanded={isExpanded}
                       >
                         <td className="py-3 px-4 text-text-primary">{group.registrationDate || '—'}</td>
+                        <td className="py-3 px-4 text-text-muted">—</td>
                         <td className="py-3 px-4 text-text-primary font-medium">{group.clientName || '—'}</td>
                         <td className="py-3 px-4 text-text-secondary" colSpan={2}>
                           <span className="inline-flex items-center gap-1.5">
@@ -145,13 +149,14 @@ export default function OrdersPage() {
                             {countLabel}
                           </span>
                         </td>
-                        <td className="py-3 px-4" colSpan={4} />
+                        <td className="py-3 px-4" colSpan={6} />
                       </tr>
                       {isExpanded &&
                         group.orders.map((order) => (
                           <Fragment key={order.id}>
                             <tr className="border-b border-border hover:bg-surface-hover/50 transition-colors bg-surface-secondary/30">
                               <td className="py-2.5 px-4 text-text-muted text-xs w-[1%] whitespace-nowrap" />
+                              <td className="py-2.5 px-4 text-text-primary font-medium">{order.orderNumber || order.id || '—'}</td>
                               <td className="py-2.5 px-4 text-text-muted text-xs w-[1%]" />
                               <td className="py-2.5 px-4 text-text-primary">{order.nomenclatureName || '—'}</td>
                               <td className="py-2.5 px-4 text-text-primary">{order.brandName || '—'}</td>
@@ -173,24 +178,15 @@ export default function OrdersPage() {
                                   {STATUS_LABELS[order.status]}
                                 </span>
                               </td>
-                            </tr>
-                            <tr className="bg-surface-secondary/50 border-b border-border">
-                              <td colSpan={8} className="px-4 py-3 pb-4 align-top pl-12">
-                                <p className="text-xs text-text-muted mb-2">Утверждение заказа.</p>
-                                <div className="flex flex-wrap gap-x-8 gap-y-2">
-                                  <div className="flex items-center justify-between gap-4 min-w-[140px]">
-                                    <span className="text-sm text-text-primary">Количество</span>
-                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
-                                      <Check className="h-3 w-3" strokeWidth={3} />
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center justify-between gap-4 min-w-[140px]">
-                                    <span className="text-sm text-text-primary">Сроки</span>
-                                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
-                                      <Check className="h-3 w-3" strokeWidth={3} />
-                                    </span>
-                                  </div>
-                                </div>
+                              <td className="py-2.5 px-4">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
+                                  <Check className="h-3 w-3" strokeWidth={3} />
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-4">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger-500 text-white" title="Утверждено">
+                                  <Check className="h-3 w-3" strokeWidth={3} />
+                                </span>
                               </td>
                             </tr>
                           </Fragment>

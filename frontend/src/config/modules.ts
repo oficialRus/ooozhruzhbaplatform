@@ -3,7 +3,7 @@ import type { ModuleInfo } from '@/types';
 export const MODULES: ModuleInfo[] = [
   {
     key: 'orders',
-    title: 'Приемка заказов',
+    title: 'Коммерческие заказы',
     description: 'Управление входящими заказами, создание и обработка заявок',
     path: '/orders',
     icon: 'ClipboardList',
@@ -11,11 +11,19 @@ export const MODULES: ModuleInfo[] = [
   },
   {
     key: 'production',
-    title: 'Сыроварение',
-    description: 'Контроль производственного процесса и этапов сваривания',
+    title: 'Получение молока',
+    description: 'Контроль поступления молока и этапов приёмки',
     path: '/production',
     icon: 'Flame',
     color: '#f59e0b',
+    children: [
+      {
+        key: 'cheeseMaking',
+        title: 'Варка сыра',
+        path: '/cheese-making',
+        icon: 'Flame',
+      },
+    ],
   },
   {
     key: 'materials',

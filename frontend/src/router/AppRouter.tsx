@@ -7,6 +7,7 @@ import { LoginPage } from '@/pages/auth';
 import { DashboardPage } from '@/pages/dashboard';
 import { OrdersPage } from '@/pages/orders';
 import { ProductionPage } from '@/pages/production';
+import { CheeseMakingPage } from '@/pages/cheese-making';
 import { MaterialsPage } from '@/pages/materials';
 import { PackagingPage } from '@/pages/packaging';
 import { ShippingPage } from '@/pages/shipping';
@@ -59,6 +60,14 @@ export default function AppRouter() {
             element={
               <ProtectedRoute requiredModule="production">
                 <ProductionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="cheese-making"
+            element={
+              <ProtectedRoute requiredModule="production">
+                <CheeseMakingPage />
               </ProtectedRoute>
             }
           />

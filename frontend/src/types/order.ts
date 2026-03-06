@@ -1,5 +1,7 @@
 export interface Order {
   id: string;
+  /** Номер заказа (отображаемый) */
+  orderNumber?: string;
   month: string;
   registrationDate: string;
   clientName: string;

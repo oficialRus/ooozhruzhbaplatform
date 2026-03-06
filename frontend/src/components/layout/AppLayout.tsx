@@ -6,6 +6,9 @@ import { MODULES } from '@/config/modules';
 const ROUTE_TITLES: Record<string, string> = {
   '/': 'Главная',
   ...Object.fromEntries(MODULES.map((m) => [m.path, m.title])),
+  ...Object.fromEntries(
+    MODULES.flatMap((m) => (m.children ?? []).map((c) => [c.path, c.title]))
+  ),
 };
 
 export default function AppLayout() {

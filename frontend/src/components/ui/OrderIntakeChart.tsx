@@ -23,7 +23,7 @@ export default function OrderIntakeChart() {
     <section className="bg-surface rounded-xl border border-border p-5">
       <div className="mb-4">
         <h3 className="font-semibold text-text-primary">
-          Приемка заказов за неделю
+          Коммерческие заказы за неделю
         </h3>
         <p className="text-sm text-text-secondary mt-1">
           Демонстрационные данные (заглушка)

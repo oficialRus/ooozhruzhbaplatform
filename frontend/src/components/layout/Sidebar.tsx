@@ -88,22 +88,42 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         {MODULES.map((mod) => {
           const Icon = ICON_MAP[mod.icon] || Package;
           return (
-            <NavLink
-              key={mod.key}
-              to={mod.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors duration-150 group
-                ${isActive
-                  ? 'bg-sidebar-active text-sidebar-text-active'
-                  : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
-                }`
-              }
-            >
-              <Icon className="w-5 h-5 shrink-0" />
-              {!collapsed && (
-                <span className="text-sm font-medium truncate">{mod.title}</span>
-              )}
-            </NavLink>
+            <div key={mod.key}>
+              <NavLink
+                to={mod.path}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors duration-150 group
+                  ${isActive
+                    ? 'bg-sidebar-active text-sidebar-text-active'
+                    : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5 shrink-0" />
+                {!collapsed && (
+                  <span className="text-sm font-medium truncate">{mod.title}</span>
+                )}
+              </NavLink>
+              {!collapsed && mod.children?.map((child) => {
+                const ChildIcon = ICON_MAP[child.icon] || Package;
+                return (
+                  <NavLink
+                    key={child.key}
+                    to={child.path}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 pl-6 pr-3 py-2 rounded-lg mb-1 transition-colors duration-150 group
+                      ${isActive
+                        ? 'bg-sidebar-active text-sidebar-text-active'
+                        : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white'
+                      }`
+                    }
+                  >
+                    <ChildIcon className="w-4 h-4 shrink-0 opacity-80" />
+                    <span className="text-sm font-medium truncate">{child.title}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
           );
         })}
       </nav>

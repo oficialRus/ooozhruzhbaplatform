@@ -55,6 +55,7 @@ const emptyProductLine = (): ProductLine => ({
 
 export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOrderModalProps) {
   const [registrationDate, setRegistrationDate] = useState('');
+  const [orderNumber, setOrderNumber] = useState('');
   const [clientId, setClientId] = useState('');
   const [newClientName, setNewClientName] = useState('');
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
@@ -164,6 +165,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
     productLines.forEach((line, index) => {
       const order: Order = {
         id: `order-${Date.now()}-${index}`,
+        orderNumber: orderNumber.trim() || undefined,
         month: monthFromDate,
         registrationDate,
         clientName,
@@ -188,13 +190,13 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Новый заказ" width="xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Новый заказ" width="2xl">
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Оглавление заказа: основная строка с ключевыми полями */}
         <div className="overflow-x-auto">
           <div className="flex gap-4 min-w-max">
             {/* Дата регистрации заказа (слева) */}
-            <div className="min-w-[220px]">
+            <div className="min-w-[200px]">
               <label htmlFor="registrationDate" className={labelClass}>Дата регистрации заказа</label>
               <input
                 id="registrationDate"
@@ -205,8 +207,21 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
               />
             </div>
 
+            {/* Номер заказа */}
+            <div className="min-w-[200px]">
+              <label htmlFor="orderNumber" className={labelClass}>Номер заказа</label>
+              <input
+                id="orderNumber"
+                type="text"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                className={inputClass}
+                placeholder="Например: З-001"
+              />
+            </div>
+
             {/* Клиент (справа от даты регистрации) */}
-            <div ref={clientDropdownRef} className="relative min-w-[260px]">
+            <div ref={clientDropdownRef} className="relative min-w-[240px]">
               <label id="client-label" className={labelClass}>Клиент</label>
               <button
                 ref={clientTriggerRef}
@@ -277,7 +292,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
             </div>
 
             {/* Требуемый срок поставки */}
-            <div className="min-w-[220px]">
+            <div className="min-w-[200px]">
               <label htmlFor="deliveryDeadline" className={labelClass}>Требуемый срок поставки</label>
               <input
                 id="deliveryDeadline"
@@ -289,7 +304,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
             </div>
 
             {/* Город доставки продукции */}
-            <div className="min-w-[240px]">
+            <div className="min-w-[220px]">
               <label htmlFor="deliveryCity" className={labelClass}>Город доставки продукции</label>
               <input
                 id="deliveryCity"
@@ -302,7 +317,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
             </div>
 
             {/* Дата оплаты по договору */}
-            <div className="min-w-[220px]">
+            <div className="min-w-[200px]">
               <label htmlFor="paymentDate" className={labelClass}>Дата оплаты по договору</label>
               <input
                 id="paymentDate"
@@ -320,7 +335,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
           <div key={line.id} className="overflow-x-auto">
             <div className="flex gap-4 min-w-max">
               {/* Номенклатура продукции */}
-              <div className="relative min-w-[260px]">
+              <div className="relative min-w-[230px]">
                 <label className={labelClass}>Номенклатура продукции</label>
                 <button
                   ref={(el) => { productTriggerRefs.current[`${lineIndex}-nomenclature`] = el; }}
@@ -338,7 +353,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
               </div>
 
               {/* Бренд */}
-              <div className="relative min-w-[220px]">
+              <div className="relative min-w-[140px]">
                 <label className={labelClass}>Бренд</label>
                 <button
                   ref={(el) => { productTriggerRefs.current[`${lineIndex}-brand`] = el; }}
@@ -355,9 +370,9 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
                 </button>
               </div>
 
-              {/* Единица продукции. Фасовка, грамм */}
-              <div className="relative min-w-[240px]">
-                <label className={labelClass}>Единица продукции. ФАСОВКА, грамм</label>
+              {/* Ед. прод. ФАС, грамм */}
+              <div className="relative min-w-[200px]">
+                <label className={labelClass}>Ед. прод. ФАС, грамм</label>
                 <button
                   ref={(el) => { productTriggerRefs.current[`${lineIndex}-packagingGrams`] = el; }}
                   type="button"
@@ -374,7 +389,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
               </div>
 
               {/* Формат упаковки */}
-              <div className="relative min-w-[260px]">
+              <div className="relative min-w-[230px]">
                 <label className={labelClass}>Формат упаковки</label>
                 <button
                   ref={(el) => { productTriggerRefs.current[`${lineIndex}-packagingFormat`] = el; }}
@@ -391,8 +406,8 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
                 </button>
               </div>
 
-              {/* Кол-во, шт. (для расчёта кг по фасовке) */}
-              <div className="min-w-[120px]">
+              {/* Кол-во, шт. */}
+              <div className="min-w-[90px]">
                 <label className={labelClass}>Кол-во, шт.</label>
                 <input
                   type="number"
@@ -405,9 +420,9 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
                 />
               </div>
 
-              {/* Цена отгрузки за единицу продукции, руб */}
-              <div className="min-w-[220px]">
-                <label className={labelClass}>Цена отгрузки за единицу продукции, руб</label>
+              {/* Цена отгр. за ед. прод. */}
+              <div className="min-w-[190px]">
+                <label className={labelClass}>Цена отгр. за ед. прод.</label>
                 <input
                   type="number"
                   min={0}
@@ -425,7 +440,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
               </div>
 
               {/* Скидка, % */}
-              <div className="min-w-[160px]">
+              <div className="min-w-[95px]">
                 <label className={labelClass}>Скидка, %</label>
                 <input
                   type="number"
@@ -439,13 +454,29 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
                 />
               </div>
 
-              {/* Цена отгрузки со скидкой */}
-              <div className="min-w-[200px]">
-                <label className={labelClass}>Цена отгрузки со скидкой</label>
+              {/* Цена отгр. за ед. со скидк. */}
+              <div className="min-w-[175px]">
+                <label className={labelClass}>Цена отгр. за ед. со скидк.</label>
                 <input
                   type="text"
                   readOnly
                   value={line.pricePerUnit ? `${getPriceAfterDiscount(line)} руб.` : '—'}
+                  className={`${inputClass} bg-surface-secondary cursor-default`}
+                  aria-readonly
+                />
+              </div>
+
+              {/* Итог цена (цена со скидкой × кол-во по позиции) */}
+              <div className="min-w-[155px]">
+                <label className={labelClass}>Итог цена</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={
+                    line.pricePerUnit && line.quantity
+                      ? `${(Number(getPriceAfterDiscount(line)) * (Number(line.quantity) || 0)).toFixed(2)} руб.`
+                      : '—'
+                  }
                   className={`${inputClass} bg-surface-secondary cursor-default`}
                   aria-readonly
                 />
@@ -522,7 +553,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
         <div className="overflow-x-auto">
           <div className="flex gap-4 min-w-max">
             {/* Сумма заказа (сумма цен со скидкой по всем позициям) */}
-            <div className="min-w-[200px]">
+            <div className="min-w-[180px]">
               <label htmlFor="quantityPackages" className={labelClass}>Сумма заказа</label>
               <input
                 id="quantityPackages"
@@ -535,7 +566,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
             </div>
 
             {/* Предоставленная скидка (общая по заказу: сумма без скидки − сумма со скидкой) */}
-            <div className="min-w-[200px]">
+            <div className="min-w-[180px]">
               <label htmlFor="quant" className={labelClass}>Предоставленная скидка</label>
               <input
                 id="quant"
@@ -548,7 +579,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
             </div>
 
             {/* Общее кол-во в кг. (сумма по позициям: фасовка × кол-во) */}
-            <div className="min-w-[200px]">
+            <div className="min-w-[180px]">
               <label htmlFor="quantityKg" className={labelClass}>Общее кол-во в кг.</label>
               <input
                 id="quantityKg"

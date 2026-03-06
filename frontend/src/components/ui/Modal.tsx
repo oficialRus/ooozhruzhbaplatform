@@ -6,7 +6,7 @@ type ModalProps = {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  width?: 'sm' | 'md' | 'lg' | 'xl';
+  width?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 };
 
 const widthClasses = {
@@ -14,6 +14,8 @@ const widthClasses = {
   md: 'max-w-lg',
   lg: 'max-w-2xl',
   xl: 'max-w-4xl',
+  /** Почти на всю ширину экрана — чтобы контент (например, форма нового заказа) умещался без горизонтального скролла */
+  '2xl': 'max-w-[98vw]',
 };
 
 export default function Modal({ isOpen, onClose, title, children, width = 'lg' }: ModalProps) {

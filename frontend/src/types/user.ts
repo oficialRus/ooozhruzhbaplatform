@@ -1,6 +1,6 @@
 export type UserRole =
   | 'admin'
-  | 'orders'        // Приемка заказов
+  | 'orders'        // Коммерческие заказы
   | 'production'    // Сваривание
   | 'materials'     // Учет материалов
   | 'packaging'     // Фасовка
@@ -22,12 +22,20 @@ export type ModuleKey =
   | 'dashboard'
   | 'orders'
   | 'production'
+  | 'cheeseMaking'
   | 'materials'
   | 'packaging'
   | 'shipping'
   | 'payments'
   | 'claims'
   | 'reports';
+
+export interface ModuleInfoChild {
+  key: ModuleKey;
+  title: string;
+  path: string;
+  icon: string;
+}
 
 export interface ModuleInfo {
   key: ModuleKey;
@@ -36,4 +44,5 @@ export interface ModuleInfo {
   path: string;
   icon: string;
   color: string;
+  children?: ModuleInfoChild[];
 }
