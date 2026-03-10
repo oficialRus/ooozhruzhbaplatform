@@ -16,14 +16,22 @@ export const MODULES: ModuleInfo[] = [
     path: '/production',
     icon: 'Flame',
     color: '#f59e0b',
-    children: [
-      {
-        key: 'cheeseMaking',
-        title: 'Варка сыра',
-        path: '/cheese-making',
-        icon: 'Flame',
-      },
-    ],
+  },
+  {
+    key: 'cheeseMaking',
+    title: 'Варка сыра',
+    description: 'Управление процессом варки сыров',
+    path: '/cheese-making',
+    icon: 'Flame',
+    color: '#f97316',
+  },
+  {
+    key: 'cheeseWarehouse',
+    title: 'Склад сыров',
+    description: 'Складской учет и хранение сыров',
+    path: '/cheese-warehouse',
+    icon: 'Package',
+    color: '#22c55e',
   },
   {
     key: 'materials',

@@ -23,6 +23,7 @@ export type ModuleKey =
   | 'orders'
   | 'production'
   | 'cheeseMaking'
+  | 'cheeseWarehouse'
   | 'materials'
   | 'packaging'
   | 'shipping'

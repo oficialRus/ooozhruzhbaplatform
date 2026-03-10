@@ -1,8 +1,17 @@
 import type { User, ModuleKey } from '@/types';
 
 const ALL_MODULES: ModuleKey[] = [
-  'dashboard', 'orders', 'production', 'materials',
-  'packaging', 'shipping', 'payments', 'claims', 'reports',
+  'dashboard',
+  'orders',
+  'production',
+  'cheeseMaking',
+  'cheeseWarehouse',
+  'materials',
+  'packaging',
+  'shipping',
+  'payments',
+  'claims',
+  'reports',
 ];
 
 export const MOCK_USERS: User[] = [
@@ -28,7 +37,7 @@ export const MOCK_USERS: User[] = [
     email: 'production@zhruzhba.ru',
     role: 'production',
     position: 'Начальник производства',
-    allowedModules: ['dashboard', 'production', 'materials'],
+    allowedModules: ['dashboard', 'production', 'cheeseMaking', 'cheeseWarehouse', 'materials'],
   },
   {
     id: '4',
