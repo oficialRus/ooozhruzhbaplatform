@@ -55,6 +55,7 @@ const emptyProductLine = (): ProductLine => ({
 
 export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOrderModalProps) {
   const [registrationDate, setRegistrationDate] = useState('');
+  const [ourOrderNumber, setOurOrderNumber] = useState('');
   const [orderNumber, setOrderNumber] = useState('');
   const [clientId, setClientId] = useState('');
   const [newClientName, setNewClientName] = useState('');
@@ -165,6 +166,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
     productLines.forEach((line, index) => {
       const order: Order = {
         id: `order-${Date.now()}-${index}`,
+        ourOrderNumber: ourOrderNumber.trim() || undefined,
         orderNumber: orderNumber.trim() || undefined,
         month: monthFromDate,
         registrationDate,
@@ -195,7 +197,33 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
         {/* Оглавление заказа: основная строка с ключевыми полями */}
         <div className="overflow-x-auto">
           <div className="flex gap-4 min-w-max">
-            {/* Дата регистрации заказа (слева) */}
+            {/* Наш внутренний номер заказа */}
+            <div className="min-w-[180px]">
+              <label htmlFor="ourOrderNumber" className={labelClass}>Наш номер</label>
+              <input
+                id="ourOrderNumber"
+                type="text"
+                value={ourOrderNumber}
+                onChange={(e) => setOurOrderNumber(e.target.value)}
+                className={inputClass}
+                placeholder="Например: Н-001"
+              />
+            </div>
+
+            {/* Номер заказа клиента */}
+            <div className="min-w-[200px]">
+              <label htmlFor="orderNumber" className={labelClass}>Номер заказа клиента</label>
+              <input
+                id="orderNumber"
+                type="text"
+                value={orderNumber}
+                onChange={(e) => setOrderNumber(e.target.value)}
+                className={inputClass}
+                placeholder="Например: З-001"
+              />
+            </div>
+
+            {/* Дата регистрации заказа */}
             <div className="min-w-[200px]">
               <label htmlFor="registrationDate" className={labelClass}>Дата регистрации заказа</label>
               <input
@@ -207,20 +235,7 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
               />
             </div>
 
-            {/* Номер заказа */}
-            <div className="min-w-[200px]">
-              <label htmlFor="orderNumber" className={labelClass}>Номер заказа</label>
-              <input
-                id="orderNumber"
-                type="text"
-                value={orderNumber}
-                onChange={(e) => setOrderNumber(e.target.value)}
-                className={inputClass}
-                placeholder="Например: З-001"
-              />
-            </div>
-
-            {/* Клиент (справа от даты регистрации) */}
+            {/* Клиент */}
             <div ref={clientDropdownRef} className="relative min-w-[240px]">
               <label id="client-label" className={labelClass}>Клиент</label>
               <button

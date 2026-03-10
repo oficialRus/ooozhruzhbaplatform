@@ -112,8 +112,9 @@ export default function OrdersPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-surface-secondary">
-                  <th className="text-left py-3 px-4 font-medium text-text-secondary">Дата регистрации</th>
+                  <th className="text-left py-3 px-4 font-medium text-text-secondary">Наш номер</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Номер заказа</th>
+                  <th className="text-left py-3 px-4 font-medium text-text-secondary">Дата регистрации</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Клиент</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Номенклатура</th>
                   <th className="text-left py-3 px-4 font-medium text-text-secondary">Бренд</th>
@@ -140,23 +141,29 @@ export default function OrdersPage() {
                         className="border-b border-border hover:bg-surface-hover transition-colors cursor-pointer select-none"
                         aria-expanded={isExpanded}
                       >
-                        <td className="py-3 px-4 text-text-primary">{group.registrationDate || '—'}</td>
                         <td className="py-3 px-4 text-text-muted">—</td>
+                        <td className="py-3 px-4 text-text-muted">—</td>
+                        <td className="py-3 px-4 text-text-primary">{group.registrationDate || '—'}</td>
                         <td className="py-3 px-4 text-text-primary font-medium">{group.clientName || '—'}</td>
-                        <td className="py-3 px-4 text-text-secondary" colSpan={2}>
+                        <td className="py-3 px-4 text-text-secondary" colSpan={3}>
                           <span className="inline-flex items-center gap-1.5">
                             {isExpanded ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
                             {countLabel}
                           </span>
                         </td>
-                        <td className="py-3 px-4" colSpan={6} />
+                        <td className="py-3 px-4" colSpan={5} />
                       </tr>
                       {isExpanded &&
                         group.orders.map((order) => (
                           <Fragment key={order.id}>
                             <tr className="border-b border-border hover:bg-surface-hover/50 transition-colors bg-surface-secondary/30">
-                              <td className="py-2.5 px-4 text-text-muted text-xs w-[1%] whitespace-nowrap" />
-                              <td className="py-2.5 px-4 text-text-primary font-medium">{order.orderNumber || order.id || '—'}</td>
+                              <td className="py-2.5 px-4 text-text-primary font-medium">
+                                {order.ourOrderNumber || order.id || '—'}
+                              </td>
+                              <td className="py-2.5 px-4 text-text-primary font-medium">
+                                {order.orderNumber || '—'}
+                              </td>
+                              <td className="py-2.5 px-4 text-text-muted text-xs w-[1%]" />
                               <td className="py-2.5 px-4 text-text-muted text-xs w-[1%]" />
                               <td className="py-2.5 px-4 text-text-primary">{order.nomenclatureName || '—'}</td>
                               <td className="py-2.5 px-4 text-text-primary">{order.brandName || '—'}</td>

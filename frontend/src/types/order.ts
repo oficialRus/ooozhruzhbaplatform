@@ -1,7 +1,9 @@
 export interface Order {
   id: string;
-  /** Номер заказа (отображаемый) */
+  /** Номер заказа клиента (если у клиента он есть) */
   orderNumber?: string;
+  /** Наш внутренний номер заказа */
+  ourOrderNumber?: string;
   month: string;
   registrationDate: string;
   clientName: string;
