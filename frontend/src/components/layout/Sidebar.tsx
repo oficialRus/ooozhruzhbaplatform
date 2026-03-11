@@ -87,6 +87,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         {/* Module links */}
         {MODULES.map((mod) => {
           const Icon = ICON_MAP[mod.icon] || Package;
+
           return (
             <div key={mod.key}>
               <NavLink
@@ -99,7 +100,17 @@ export default function Sidebar({ className = '' }: SidebarProps) {
                   }`
                 }
               >
-                <Icon className="w-5 h-5 shrink-0" />
+                {mod.key === 'production' ? (
+                  <span className="w-5 h-5 shrink-0 flex items-center justify-center text-lg filter grayscale">
+                    🚚
+                  </span>
+                ) : mod.key === 'cheeseMaking' ? (
+                  <span className="w-5 h-5 shrink-0 flex items-center justify-center text-lg filter grayscale">
+                    🧀
+                  </span>
+                ) : (
+                  <Icon className="w-5 h-5 shrink-0" />
+                )}
                 {!collapsed && (
                   <span className="text-sm font-medium truncate">{mod.title}</span>
                 )}
