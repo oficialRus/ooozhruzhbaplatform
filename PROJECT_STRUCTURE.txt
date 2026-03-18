@@ -1,0 +1,89 @@
+ООО Дружба — структура проекта (frontend + backend)
+
+Предположение: бэкенд уже подключен к фронтенду (т.е. вместо моков фронтенд использует HTTP API `/api/...`).
+Текущее описание опирается на фактическую структуру папок в репозитории.
+
+1) Корень проекта
+   - `frontend/` — клиентская часть на React + TypeScript (Vite + TailwindCSS).
+   - `backend/`  — серверная часть на Go (HTTP server).
+   - `README.md` — краткое описание и обзор модулей системы.
+
+2) Backend (Go)
+   - `backend/cmd/server/main.go`
+     - Точка входа сервера.
+     - Сейчас реализован минимум: health endpoint `GET /api/health` (в демо/каркасе).
+   - `backend/internal/handlers/`
+     - HTTP обработчики.
+     - `auth.go` — обработчики авторизации (в коде помечено как TODO: JWT и логика).
+   - `backend/internal/middleware/`
+     - middleware авторизации.
+     - `auth.go` — TODO: проверка JWT и прав.
+   - `backend/internal/database/`
+     - `database.go` — TODO: подключение к БД (например, PostgreSQL).
+   - `backend/internal/models/`
+     - `user.go` — модель пользователя, включая `Role` и `AllowedModules`.
+     - `order.go` — модель заказа и статусы (new/processing/completed/cancelled).
+   - `backend/internal/role/`
+     - Роли пользователей (`admin`, `orders`, `production`, `materials`, и др. константы).
+     - Вспомогательные функции для проверки прав и набора доступных модулей.
+   - `backend/internal/Tabs/`
+     - Папки по модулям/вкладкам (например `home`, `materials`, `payment`, `order_acceptance`, `report` и т.д.).
+     - Сейчас в каждой вкладке лежат заготовки `doc.go`/иногда `handlers.go` (TODO по CRUD/обработчикам).
+
+Как ожидается при подключенном бэкенде:
+   - Авторизация и получение профиля: `POST/GET /api/auth...` и/или `GET /api/me`.
+   - Список/CRUD пользователей (сотрудников): например `GET/POST /api/employees...`.
+   - Доступ к вкладкам/модулям определяется ролью и списком `AllowedModules` (backend формирует ответ и/или проверяет на сервере).
+
+3) Frontend (React + TS)
+   - Точка входа
+     - `frontend/src/main.tsx` — инициализация приложения.
+     - `frontend/src/App.tsx` — оборачивает приложение в `AuthProvider` и рендерит роутер.
+   - Стиль
+     - `frontend/src/index.css` — глобальные стили Tailwind/проектные токены.
+   - Контекст авторизации
+     - `frontend/src/context/AuthContext.tsx`
+       - хранит `user` и флаг `isAuthenticated`
+       - в текущей версии для логина используется `MOCK_USERS` (заглушка)
+       - предполагается, что при подключенном бэкенде `login()` будет делать запрос на `/api/...` и получать пользователя/токен.
+   - Роутинг и защита маршрутов
+     - `frontend/src/router/AppRouter.tsx`
+       - публичный роут: `/login`
+       - защищенный layout: `AppLayout` внутри `ProtectedRoute`
+       - страницы модулей: `orders`, `production`, `cheese-making`, `cheese-warehouse`, `materials`, `packaging`,
+         `shipping`, `payments`, `claims`, `reports`, `employees`
+     - `frontend/src/router/ProtectedRoute.tsx`
+       - сейчас проверяет только факт авторизации (redirect на `/login` при отсутствии сессии).
+       - при полной интеграции предполагается добавление проверки `requiredModule` через `user.allowedModules`.
+   - Layout/навигация
+     - `frontend/src/components/layout/` (например `Sidebar.tsx`)
+       - боковое меню генерируется из `frontend/src/config/modules.ts`
+       - пункты меню ведут на пути роутера (`/orders`, `/production`, `/materials`, `/shipping`, `/employees` и т.д.)
+   - Конфиг модулей
+     - `frontend/src/config/modules.ts`
+       - массив `MODULES`: ключ, заголовок, path, иконка и (при наличии) вложенные пункты.
+
+4) Страницы (пример соответствия “вкладка -> страница”)
+   - `frontend/src/pages/auth/` — страница логина.
+   - `frontend/src/pages/dashboard/` — дашборд.
+   - `frontend/src/pages/orders/` — приемка/управление заказами.
+   - `frontend/src/pages/production/` — производственный модуль.
+   - `frontend/src/pages/cheese-making/` — варка сыра (подмодуль).
+   - `frontend/src/pages/cheese-warehouse/` — склад сыров (подмодуль).
+   - `frontend/src/pages/materials/` — учет материалов.
+   - `frontend/src/pages/packaging/` — фасовка.
+   - `frontend/src/pages/shipping/` — отгрузка и накладные.
+   - `frontend/src/pages/payments/` — оплата и дебиторка.
+   - `frontend/src/pages/claims/` — рекламации.
+   - `frontend/src/pages/reports/` — отчеты.
+   - `frontend/src/pages/employees/` — управление сотрудниками (форма + таблица).
+     - `EmployeesPage` сейчас хранит данные локально в состоянии;
+       - при подключенном бэкенде ожидается замена на запросы к API (CRUD сотрудников).
+
+5) Текущие заметки по интеграции
+   - В демо-режиме фронтенд использует `MOCK_USERS` и локальное состояние.
+   - После подключения бэкенда:
+     - `AuthContext.login()` должен обращаться к API и получать пользователя/права.
+     - CRUD данных (например сотрудники) должен выполняться через API.
+     - `ProtectedRoute` должен начать проверять `requiredModule` по `user.allowedModules` (либо аналогичная проверка должна выполняться сервером).
+

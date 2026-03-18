@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -27,6 +28,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Wallet,
   AlertTriangle,
   BarChart3,
+  Users,
 };
 
 interface SidebarProps {

@@ -34,14 +34,6 @@ export const MODULES: ModuleInfo[] = [
     color: '#22c55e',
   },
   {
-    key: 'materials',
-    title: 'Учет материалов',
-    description: 'Складской учет материалов и комплектующих',
-    path: '/materials',
-    icon: 'Package',
-    color: '#8b5cf6',
-  },
-  {
     key: 'packaging',
     title: 'Фасовка',
     description: 'Управление процессом фасовки готовой продукции',
@@ -56,6 +48,14 @@ export const MODULES: ModuleInfo[] = [
     path: '/shipping',
     icon: 'Truck',
     color: '#06b6d4',
+  },
+  {
+    key: 'materials',
+    title: 'Учет материалов',
+    description: 'Складской учет материалов и комплектующих',
+    path: '/materials',
+    icon: 'Package',
+    color: '#8b5cf6',
   },
   {
     key: 'payments',
@@ -80,5 +80,13 @@ export const MODULES: ModuleInfo[] = [
     path: '/reports',
     icon: 'BarChart3',
     color: '#2563eb',
+  },
+  {
+    key: 'employees',
+    title: 'Сотрудники',
+    description: 'Управление учетными записями и доступами сотрудников',
+    path: '/employees',
+    icon: 'Users',
+    color: '#0ea5e9',
   },
 ];

@@ -12,6 +12,7 @@ const ALL_MODULES: ModuleKey[] = [
   'payments',
   'claims',
   'reports',
+  'employees',
 ];
 
 export const MOCK_USERS: User[] = [

@@ -29,7 +29,8 @@ export type ModuleKey =
   | 'shipping'
   | 'payments'
   | 'claims'
-  | 'reports';
+  | 'reports'
+  | 'employees';
 
 export interface ModuleInfoChild {
   key: ModuleKey;

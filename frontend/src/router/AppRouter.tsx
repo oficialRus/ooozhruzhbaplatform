@@ -15,6 +15,7 @@ import { ShippingPage } from '@/pages/shipping';
 import { PaymentsPage } from '@/pages/payments';
 import { ClaimsPage } from '@/pages/claims';
 import { ReportsPage } from '@/pages/reports';
+import { EmployeesPage } from '@/pages/employees';
 
 function AuthRedirect({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -125,6 +126,14 @@ export default function AppRouter() {
             element={
               <ProtectedRoute requiredModule="reports">
                 <ReportsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="employees"
+            element={
+              <ProtectedRoute requiredModule="employees">
+                <EmployeesPage />
               </ProtectedRoute>
             }
           />

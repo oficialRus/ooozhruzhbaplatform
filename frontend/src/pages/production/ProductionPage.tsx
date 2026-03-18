@@ -11,6 +11,7 @@ interface MilkQualityAnalysis {
   protein: string;
   organoleptic: string;
   passed: boolean;
+  registrationId?: string;
 }
 
 interface MilkRegistration {
@@ -42,9 +43,11 @@ export default function ProductionPage() {
   const [registrations, setRegistrations] = useState<MilkRegistration[]>([]);
   const [form, setForm] = useState(initialAnalysis);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'analysis' | 'registration'>('analysis');
+  const [activeTab, setActiveTab] = useState<'analysis' | 'registration'>('registration');
   const [isRegistrationModalOpen, setIsRegistrationModalOpen] = useState(false);
   const [registrationAnalysisId, setRegistrationAnalysisId] = useState<string | undefined>(undefined);
+  const [analysisRegistrationId, setAnalysisRegistrationId] = useState<string | undefined>(undefined);
+  const [analysisToView, setAnalysisToView] = useState<MilkQualityAnalysis | null>(null);
 
   const [registrationDate, setRegistrationDate] = useState(new Date().toISOString().slice(0, 10));
   const [registrationSupplier, setRegistrationSupplier] = useState('');
@@ -81,15 +84,24 @@ export default function ProductionPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setAnalyses((prev) => [
-      {
-        ...form,
-        id: crypto.randomUUID(),
-      },
-      ...prev,
-    ]);
+    const newAnalysis: MilkQualityAnalysis = {
+      ...form,
+      id: crypto.randomUUID(),
+      registrationId: analysisRegistrationId,
+    };
+    setAnalyses((prev) => [newAnalysis, ...prev]);
+    if (analysisRegistrationId) {
+      setRegistrations((prev) =>
+        prev.map((r) =>
+          r.id === analysisRegistrationId
+            ? { ...r, analysisId: newAnalysis.id }
+            : r
+        ),
+      );
+    }
     setForm(initialAnalysis);
     setIsFormOpen(false);
+    setAnalysisRegistrationId(undefined);
   };
 
   return (
@@ -112,33 +124,22 @@ export default function ProductionPage() {
               <Beaker className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              {activeTab === 'analysis' ? (
-                <>
-                  <h3 className="font-semibold text-text-primary">Анализ поступающего молока</h3>
-                  <p className="text-sm text-text-muted">
-                    Проверка молока по ключевым показателям качества: температура, жирность, pH, белок и органолептика.
-                  </p>
-                </>
-              ) : (
+              {activeTab === 'registration' ? (
                 <>
                   <h3 className="font-semibold text-text-primary">Регистрация поступления молока</h3>
                   <p className="text-sm text-text-muted">
                     Фиксация факта приёмки молока: поставщик, вид молока, объём в литрах и килограммах, документы.
                   </p>
                 </>
+              ) : (
+                <>
+                  <h3 className="font-semibold text-text-primary">Анализ поступающего молока</h3>
+                  <p className="text-sm text-text-muted">
+                    Проверка молока по ключевым показателям качества: температура, жирность, pH, белок и органолептика.
+                  </p>
+                </>
               )}
               <div className="mt-3 inline-flex rounded-lg border border-border bg-surface-secondary p-0.5 text-sm">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('analysis')}
-                  className={`px-4 py-1.5 rounded-md transition-colors ${
-                    activeTab === 'analysis'
-                      ? 'bg-surface shadow-sm text-text-primary'
-                      : 'text-text-secondary hover:text-text-primary'
-                  }`}
-                >
-                  Анализ
-                </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('registration')}
@@ -150,6 +151,17 @@ export default function ProductionPage() {
                 >
                   Регистрация
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('analysis')}
+                  className={`px-4 py-1.5 rounded-md transition-colors ${
+                    activeTab === 'analysis'
+                      ? 'bg-surface shadow-sm text-text-primary'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Анализ
+                </button>
               </div>
             </div>
           </div>
@@ -160,14 +172,6 @@ export default function ProductionPage() {
             <>
               <div className="flex items-center justify-between pt-2">
                 <span className="text-sm text-text-muted">Результаты анализов</span>
-                <button
-                  type="button"
-                  onClick={() => setIsFormOpen(true)}
-                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  Добавить анализ
-                </button>
               </div>
 
               {isFormOpen && (
@@ -292,7 +296,6 @@ export default function ProductionPage() {
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Белок</th>
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Органолептика</th>
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Соответствие</th>
-                        <th className="text-right py-3 px-4 font-medium text-text-secondary w-[1%]"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -317,20 +320,6 @@ export default function ProductionPage() {
                               <span className="text-text-muted text-xs">Нет</span>
                             )}
                           </td>
-                          <td className="py-2.5 px-4 text-right whitespace-nowrap">
-                            {!registrations.some((r) => r.analysisId === a.id) && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setRegistrationAnalysisId(a.id);
-                                  setIsRegistrationModalOpen(true);
-                                }}
-                                className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
-                              >
-                                Регистрация
-                              </button>
-                            )}
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -353,9 +342,20 @@ export default function ProductionPage() {
               </div>
 
               {registrations.length === 0 ? (
-                <p className="py-8 text-center text-sm text-text-muted">
-                  Пока нет зарегистрированных поступлений. Создайте запись через кнопку «Регистрация» в результатах анализов.
-                </p>
+                <div className="py-6 space-y-4">
+                  <div className="text-sm text-text-muted">
+                    <p className="mb-2">
+                      Пока нет зарегистрированных поступлений. Ниже пример того, как может выглядеть одна запись:
+                    </p>
+                    <div className="inline-block rounded-lg border border-border bg-surface-secondary px-4 py-3 text-left text-xs text-text-secondary space-y-1">
+                      <p><span className="font-semibold text-text-primary">Дата:</span> 2026-03-10</p>
+                      <p><span className="font-semibold text-text-primary">Поставщик:</span> МетаКом</p>
+                      <p><span className="font-semibold text-text-primary">Вид молока:</span> коровье</p>
+                      <p><span className="font-semibold text-text-primary">Кол-во, л / кг:</span> 1200 / 1236,00</p>
+                      <p><span className="font-semibold text-text-primary">Сканы документов:</span> ТТН №123 от 10.03.2026</p>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="overflow-x-auto rounded-lg border border-border">
                   <table className="w-full text-sm">
@@ -367,30 +367,79 @@ export default function ProductionPage() {
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Кол-во, л</th>
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Кол-во, кг</th>
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Сканы документов</th>
+                        <th className="text-right py-3 px-4 font-medium text-text-secondary w-[1%]">Анализ</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {registrations.map((r) => (
-                        <tr key={r.id} className="border-b border-border hover:bg-surface-hover transition-colors">
-                          <td className="py-2.5 px-4 text-text-primary">{r.date}</td>
-                          <td className="py-2.5 px-4 text-text-primary">{r.supplier || '—'}</td>
-                          <td className="py-2.5 px-4 text-text-primary">{r.milkType || '—'}</td>
-                          <td className="py-2.5 px-4 text-text-primary">{r.liters || '—'}</td>
-                          <td className="py-2.5 px-4 text-text-primary">{r.kg || '—'}</td>
-                          <td className="py-2.5 px-4 text-text-primary max-w-[220px] truncate" title={r.docsNote}>
-                            {r.docsNote || '—'}
-                          </td>
-                        </tr>
-                      ))}
+                      {registrations.map((r) => {
+                        const linkedAnalysis = r.analysisId
+                          ? analyses.find((a) => a.id === r.analysisId)
+                          : undefined;
+                        return (
+                          <tr key={r.id} className="border-b border-border hover:bg-surface-hover transition-colors">
+                            <td className="py-2.5 px-4 text-text-primary">{r.date}</td>
+                            <td className="py-2.5 px-4 text-text-primary">{r.supplier || '—'}</td>
+                            <td className="py-2.5 px-4 text-text-primary">{r.milkType || '—'}</td>
+                            <td className="py-2.5 px-4 text-text-primary">{r.liters || '—'}</td>
+                            <td className="py-2.5 px-4 text-text-primary">{r.kg || '—'}</td>
+                            <td className="py-2.5 px-4 text-text-primary max-w-[220px] truncate" title={r.docsNote}>
+                              {r.docsNote || '—'}
+                            </td>
+                            <td className="py-2.5 px-4 text-right whitespace-nowrap">
+                              {linkedAnalysis ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setAnalysisToView(linkedAnalysis)}
+                                  className="inline-flex items-center gap-1 rounded-full bg-amber-400 hover:bg-amber-500 px-3 py-1 text-xs font-medium text-white shadow-sm transition-colors"
+                                >
+                                  Анализ
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveTab('analysis');
+                                    setIsFormOpen(true);
+                                    setAnalysisRegistrationId(r.id);
+                                    setForm((prev) => ({
+                                      ...prev,
+                                      date: r.date || prev.date,
+                                      batch: r.supplier
+                                        ? `${r.supplier}${r.milkType ? `, ${r.milkType}` : ''}`
+                                        : prev.batch,
+                                    }));
+                                  }}
+                                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                                >
+                                  Анализ
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               )}
+              <div className="flex justify-center pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegistrationModalOpen(true);
+                    setRegistrationAnalysisId(undefined);
+                  }}
+                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Зарегистрировать поступление
+                </button>
+              </div>
             </div>
           )}
 
           {isRegistrationModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="fixed inset-y-0 left-[260px] right-0 z-50 flex items-center justify-center bg-black/40">
               <div className="w-full max-w-lg rounded-xl bg-surface border border-border shadow-xl">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                   <h3 className="text-base font-semibold text-text-primary">Регистрация поступления молока</h3>
@@ -406,15 +455,6 @@ export default function ProductionPage() {
                   className="px-5 py-4 space-y-4"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (
-                      !registrationDate ||
-                      !registrationSupplier ||
-                      !registrationMilkType ||
-                      !registrationLiters ||
-                      !registrationKg
-                    ) {
-                      return;
-                    }
                     setRegistrations((prev) => [
                       {
                         id: crypto.randomUUID(),
@@ -525,6 +565,74 @@ export default function ProductionPage() {
           )}
         </div>
       </section>
+
+      {analysisToView && (
+        <div className="fixed inset-y-0 left-[260px] right-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-lg rounded-xl bg-surface border border-border shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3 className="text-base font-semibold text-text-primary">Детали анализа</h3>
+              <button
+                type="button"
+                className="text-sm text-text-muted hover:text-text-primary"
+                onClick={() => setAnalysisToView(null)}
+              >
+                Закрыть
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-text-secondary">Дата анализа</div>
+                  <div className="font-medium text-text-primary">{analysisToView.date || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Партия / поставка</div>
+                  <div className="font-medium text-text-primary">{analysisToView.batch || '—'}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-text-secondary">Температура, °C</div>
+                  <div className="font-medium text-text-primary">{analysisToView.temperature || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Жирность, %</div>
+                  <div className="font-medium text-text-primary">{analysisToView.fat || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">pH</div>
+                  <div className="font-medium text-text-primary">{analysisToView.ph || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Белок, %</div>
+                  <div className="font-medium text-text-primary">{analysisToView.protein || '—'}</div>
+                </div>
+              </div>
+              <div>
+                <div className="text-text-secondary">Органолептические свойства</div>
+                <div className="font-medium text-text-primary">
+                  {analysisToView.organoleptic || '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-text-secondary">Соответствие нормативам</div>
+                <div className="font-medium text-text-primary">
+                  {analysisToView.passed ? 'Соответствует' : 'Не соответствует'}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setAnalysisToView(null)}
+                className="px-4 py-2 text-sm rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
