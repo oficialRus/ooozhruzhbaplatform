@@ -1,0 +1,39 @@
+# Backend (Go) - build / local artifacts (если появятся в репозитории)
+bin/
+*.exe
+
+# Frontend (React/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.env*
+
+# Общие штуки, которые нельзя пушить
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/.env*
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Secret keys / certificates (на всякий случай)
+*.pem
+*.key
+*.crt
+*.cer
+
+# IDE / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.swn
+
+# TypeScript build info
+*.tsbuildinfo
+
