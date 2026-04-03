@@ -3,6 +3,8 @@ import { BarChart3, ClipboardList, Plus } from 'lucide-react';
 import { TaskItem } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 import { MOCK_USERS } from '@/mocks/users';
+import { DateInputRu } from '@/components/ui';
+import { formatDateRu } from '@/utils/dateFormat';
 
 type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -20,13 +22,6 @@ interface DashboardTask {
 type TaskListTab = 'created' | 'received';
 
 const TASKS_STORAGE_KEY = 'dashboard_tasks';
-
-function formatDate(value: string): string | undefined {
-  if (!value) return undefined;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-  return date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
-}
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -74,7 +69,7 @@ export default function DashboardPage() {
       title: trimmedTitle,
       assignee: assignee.trim() || 'Не назначен',
       priority,
-      dueDate: formatDate(dueDate),
+      dueDate: dueDate.trim() ? formatDateRu(dueDate) : undefined,
       status: 'pending',
       createdBy: user.id,
     };
@@ -155,10 +150,10 @@ export default function DashboardPage() {
                   <option value="high">Высокий приоритет</option>
                 </select>
 
-                <input
+                <DateInputRu
                   value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  type="date"
+                  onChange={setDueDate}
+                  placeholder="ДД.ММ.ГГГГ"
                   className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-text-primary outline-none focus:border-primary-300"
                 />
               </div>

@@ -68,7 +68,7 @@ export default function AppRouter() {
           <Route
             path="cheese-making"
             element={
-              <ProtectedRoute requiredModule="production">
+              <ProtectedRoute requiredModule="cheeseMaking">
                 <CheeseMakingPage />
               </ProtectedRoute>
             }
@@ -76,7 +76,7 @@ export default function AppRouter() {
           <Route
             path="cheese-warehouse"
             element={
-              <ProtectedRoute requiredModule="production">
+              <ProtectedRoute requiredModule="cheeseWarehouse">
                 <CheeseWarehousePage />
               </ProtectedRoute>
             }

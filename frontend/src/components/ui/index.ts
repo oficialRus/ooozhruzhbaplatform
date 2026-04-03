@@ -4,3 +4,4 @@ export { default as ActivityItem } from './ActivityItem';
 export { default as TaskItem } from './TaskItem';
 export { default as OrderIntakeChart } from './OrderIntakeChart';
 export { default as Modal } from './Modal';
+export { default as DateInputRu } from './DateInputRu';

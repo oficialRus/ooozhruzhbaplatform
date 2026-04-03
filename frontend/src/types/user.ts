@@ -16,6 +16,9 @@ export interface User {
   avatar?: string;
   position: string;
   allowedModules: ModuleKey[];
+  editableModules?: ModuleKey[];
+  accessRights?: Record<string, 'none' | 'read' | 'edit'>;
+  personnelNumber?: string;
 }
 
 export type ModuleKey =

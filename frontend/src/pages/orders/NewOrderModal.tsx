@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Plus } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import { DateInputRu } from '@/components/ui';
 import { MOCK_CLIENTS, MOCK_NOMENCLATURE, MOCK_BRANDS } from '@/mocks/orders';
 import type { Order } from '@/types';
 
@@ -159,9 +160,9 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
     const clientName = clientId === '__new__' ? newClientName : (MOCK_CLIENTS.find((c) => c.id === clientId)?.name ?? '');
     const monthFromDate = (() => {
       if (!registrationDate) return '';
-      const d = new Date(registrationDate);
-      if (Number.isNaN(d.getTime())) return '';
-      return String(d.getMonth() + 1);
+      const m = registrationDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) return String(parseInt(m[2], 10));
+      return '';
     })();
     productLines.forEach((line, index) => {
       const order: Order = {
@@ -225,12 +226,11 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
 
             {/* Дата регистрации заказа */}
             <div className="min-w-[200px]">
-              <label htmlFor="registrationDate" className={labelClass}>Дата регистрации заказа</label>
-              <input
+              <label htmlFor="registrationDate" className={labelClass}>Дата регистрации заказа (ДД.ММ.ГГГГ)</label>
+              <DateInputRu
                 id="registrationDate"
-                type="date"
                 value={registrationDate}
-                onChange={(e) => setRegistrationDate(e.target.value)}
+                onChange={setRegistrationDate}
                 className={inputClass}
               />
             </div>
@@ -308,12 +308,11 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
 
             {/* Требуемый срок поставки */}
             <div className="min-w-[200px]">
-              <label htmlFor="deliveryDeadline" className={labelClass}>Требуемый срок поставки</label>
-              <input
+              <label htmlFor="deliveryDeadline" className={labelClass}>Требуемый срок поставки (ДД.ММ.ГГГГ)</label>
+              <DateInputRu
                 id="deliveryDeadline"
-                type="date"
                 value={deliveryDeadline}
-                onChange={(e) => setDeliveryDeadline(e.target.value)}
+                onChange={setDeliveryDeadline}
                 className={inputClass}
               />
             </div>
@@ -333,12 +332,11 @@ export default function NewOrderModal({ isOpen, onClose, onOrderCreated }: NewOr
 
             {/* Дата оплаты по договору */}
             <div className="min-w-[200px]">
-              <label htmlFor="paymentDate" className={labelClass}>Дата оплаты по договору</label>
-              <input
+              <label htmlFor="paymentDate" className={labelClass}>Дата оплаты по договору (ДД.ММ.ГГГГ)</label>
+              <DateInputRu
                 id="paymentDate"
-                type="date"
                 value={paymentDate}
-                onChange={(e) => setPaymentDate(e.target.value)}
+                onChange={setPaymentDate}
                 className={inputClass}
               />
             </div>

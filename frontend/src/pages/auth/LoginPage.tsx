@@ -121,31 +121,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo accounts hint */}
-          <div className="mt-6 pt-4 border-t border-border">
-            <p className="text-xs text-text-muted text-center mb-3">
-              Демо-аккаунты для входа (пароль: любой):
-            </p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {[
-                { email: 'admin@zhruzhba.ru', label: 'Директор' },
-                { email: 'orders@zhruzhba.ru', label: 'Заказы' },
-                { email: 'production@zhruzhba.ru', label: 'Производство' },
-                { email: 'warehouse@zhruzhba.ru', label: 'Склад' },
-              ].map((acc) => (
-                <button
-                  key={acc.email}
-                  onClick={() => {
-                    setEmail(acc.email);
-                    setPassword('demo');
-                  }}
-                  className="text-xs text-primary-500 hover:text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-md px-2 py-1.5 transition-colors text-center"
-                >
-                  {acc.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

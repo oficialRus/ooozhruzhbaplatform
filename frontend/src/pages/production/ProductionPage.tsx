@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { Flame, Beaker, Plus, Check } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Flame, Beaker, Plus, Check, Download, Pencil } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { DateInputRu } from '@/components/ui';
+import { formatDateRu, formatDateRuOrEmpty, todayIsoLocal } from '@/utils/dateFormat';
 
 interface MilkQualityAnalysis {
   id: string;
@@ -16,6 +20,8 @@ interface MilkQualityAnalysis {
 
 interface MilkRegistration {
   id: string;
+  batchNumber: string;
+  registrationNumber: string;
   date: string;
   supplier: string;
   milkType: string;
@@ -27,8 +33,58 @@ interface MilkRegistration {
 
 const MILK_DENSITY_KG_PER_L: number = 1.03;
 
+/** Следующий номер регистрации РМ-NNNNNN по уже сохранённым поступлениям. */
+function getNextRegistrationNumber(existing: MilkRegistration[]): string {
+  let max = 0;
+  for (const r of existing) {
+    const m = r.registrationNumber.match(/(\d+)\s*$/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (!Number.isNaN(n) && n > max) max = n;
+    }
+  }
+  return `РМ-${String(max + 1).padStart(6, '0')}`;
+}
+
+function downloadMilkRegistrationsExcel(
+  registrations: MilkRegistration[],
+  analyses: MilkQualityAnalysis[],
+): void {
+  const rows = registrations.map((r) => {
+    const hasAnalysis = !!(r.analysisId && analyses.some((a) => a.id === r.analysisId));
+    return {
+      '№ рег.': r.registrationNumber || '',
+      'Номер партии': r.batchNumber || '',
+      Дата: formatDateRuOrEmpty(r.date) || r.date || '',
+      Поставщик: r.supplier || '',
+      'Вид молока': r.milkType || '',
+      'Кол-во, л': r.liters || '',
+      'Кол-во, кг': r.kg || '',
+      'Сканы документов': r.docsNote || '',
+      Анализ: hasAnalysis ? 'Привязан' : 'Не привязан',
+    };
+  });
+  const sheet = XLSX.utils.json_to_sheet(rows);
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, 'Поступления');
+  const buf = XLSX.write(book, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([buf], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const n = new Date();
+  const y = n.getFullYear();
+  const mo = String(n.getMonth() + 1).padStart(2, '0');
+  const d = String(n.getDate()).padStart(2, '0');
+  a.download = `postupleniya_moloka_${formatDateRu(`${y}-${mo}-${d}`).replace(/\./g, '-')}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 const initialAnalysis: Omit<MilkQualityAnalysis, 'id'> = {
-  date: new Date().toISOString().slice(0, 10),
+  date: todayIsoLocal(),
   batch: '',
   temperature: '',
   fat: '',
@@ -39,6 +95,8 @@ const initialAnalysis: Omit<MilkQualityAnalysis, 'id'> = {
 };
 
 export default function ProductionPage() {
+  const { canEditModule } = useAuth();
+  const canEditProduction = canEditModule('production');
   const [analyses, setAnalyses] = useState<MilkQualityAnalysis[]>([]);
   const [registrations, setRegistrations] = useState<MilkRegistration[]>([]);
   const [form, setForm] = useState(initialAnalysis);
@@ -48,13 +106,32 @@ export default function ProductionPage() {
   const [registrationAnalysisId, setRegistrationAnalysisId] = useState<string | undefined>(undefined);
   const [analysisRegistrationId, setAnalysisRegistrationId] = useState<string | undefined>(undefined);
   const [analysisToView, setAnalysisToView] = useState<MilkQualityAnalysis | null>(null);
+  const [registrationToView, setRegistrationToView] = useState<MilkRegistration | null>(null);
 
-  const [registrationDate, setRegistrationDate] = useState(new Date().toISOString().slice(0, 10));
+  const [registrationBatchNumber, setRegistrationBatchNumber] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
+  const [registrationDate, setRegistrationDate] = useState(todayIsoLocal());
   const [registrationSupplier, setRegistrationSupplier] = useState('');
   const [registrationMilkType, setRegistrationMilkType] = useState('');
   const [registrationLiters, setRegistrationLiters] = useState('');
   const [registrationKg, setRegistrationKg] = useState('');
   const [registrationDocsNote, setRegistrationDocsNote] = useState('');
+  const [editingRegistrationId, setEditingRegistrationId] = useState<string | undefined>(
+    undefined,
+  );
+  const [editingAnalysisId, setEditingAnalysisId] = useState<string | undefined>(undefined);
+
+  const loadRegistrationIntoForm = (r: MilkRegistration) => {
+    setRegistrationBatchNumber(r.batchNumber);
+    setRegistrationNumber(r.registrationNumber);
+    setRegistrationDate(r.date);
+    setRegistrationSupplier(r.supplier);
+    setRegistrationMilkType(r.milkType);
+    setRegistrationLiters(r.liters);
+    setRegistrationKg(r.kg);
+    setRegistrationDocsNote(r.docsNote);
+    setRegistrationAnalysisId(r.analysisId);
+  };
 
   const setField = (field: keyof typeof form, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -82,26 +159,52 @@ export default function ProductionPage() {
     setRegistrationLiters(liters.toFixed(2));
   };
 
+  const resetRegistrationFormFields = (regsForNext: MilkRegistration[]) => {
+    setRegistrationBatchNumber('');
+    setRegistrationNumber(getNextRegistrationNumber(regsForNext));
+    setRegistrationDate(todayIsoLocal());
+    setRegistrationSupplier('');
+    setRegistrationMilkType('');
+    setRegistrationLiters('');
+    setRegistrationKg('');
+    setRegistrationDocsNote('');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newAnalysis: MilkQualityAnalysis = {
-      ...form,
-      id: crypto.randomUUID(),
-      registrationId: analysisRegistrationId,
-    };
-    setAnalyses((prev) => [newAnalysis, ...prev]);
-    if (analysisRegistrationId) {
-      setRegistrations((prev) =>
-        prev.map((r) =>
-          r.id === analysisRegistrationId
-            ? { ...r, analysisId: newAnalysis.id }
-            : r
+    if (editingAnalysisId) {
+      const prevRow = analyses.find((a) => a.id === editingAnalysisId);
+      const registrationId = analysisRegistrationId ?? prevRow?.registrationId;
+      setAnalyses((prev) =>
+        prev.map((a) =>
+          a.id === editingAnalysisId
+            ? {
+                ...form,
+                id: editingAnalysisId,
+                registrationId,
+              }
+            : a,
         ),
       );
+    } else {
+      const newAnalysis: MilkQualityAnalysis = {
+        ...form,
+        id: crypto.randomUUID(),
+        registrationId: analysisRegistrationId,
+      };
+      setAnalyses((prev) => [newAnalysis, ...prev]);
+      if (analysisRegistrationId) {
+        setRegistrations((prev) =>
+          prev.map((r) =>
+            r.id === analysisRegistrationId ? { ...r, analysisId: newAnalysis.id } : r,
+          ),
+        );
+      }
     }
     setForm(initialAnalysis);
     setIsFormOpen(false);
     setAnalysisRegistrationId(undefined);
+    setEditingAnalysisId(undefined);
   };
 
   return (
@@ -118,6 +221,11 @@ export default function ProductionPage() {
 
       {/* Этап 1 БП: Анализ молока на соответствие качественным параметрам */}
       <section className="bg-surface rounded-xl border border-border overflow-hidden">
+        {!canEditProduction && (
+          <div className="mx-4 mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            Раздел доступен только для чтения. Редактирование и регистрация поступлений недоступны.
+          </div>
+        )}
         <div className="p-4 border-b border-border bg-amber-50/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -179,28 +287,67 @@ export default function ProductionPage() {
                   onSubmit={handleSubmit}
                   className="p-4 rounded-xl border border-amber-200 bg-amber-50/30 space-y-4"
                 >
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-text-primary">Новый результат анализа</h4>
-                    <button
-                      type="button"
-                      onClick={() => setIsFormOpen(false)}
-                      className="text-text-muted hover:text-text-primary text-sm"
-                    >
-                      Отмена
-                    </button>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="font-medium text-text-primary">
+                      {editingAnalysisId
+                        ? 'Редактирование результата анализа'
+                        : 'Новый результат анализа'}
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={!editingAnalysisId}
+                        title={
+                          editingAnalysisId
+                            ? 'Сбросить поля к последнему сохранённому варианту'
+                            : 'Доступно при редактировании из карточки «Детали анализа»'
+                        }
+                        onClick={() => {
+                          if (!editingAnalysisId) return;
+                          const row = analyses.find((a) => a.id === editingAnalysisId);
+                          if (!row) return;
+                          setForm({
+                            date: row.date,
+                            batch: row.batch ?? '',
+                            temperature: row.temperature,
+                            fat: row.fat,
+                            ph: row.ph,
+                            protein: row.protein,
+                            organoleptic: row.organoleptic,
+                            passed: row.passed,
+                          });
+                          setAnalysisRegistrationId(row.registrationId);
+                        }}
+                        className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Редактировать
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsFormOpen(false);
+                          setEditingAnalysisId(undefined);
+                          setAnalysisRegistrationId(undefined);
+                          setForm(initialAnalysis);
+                        }}
+                        className="text-text-muted hover:text-text-primary text-sm"
+                      >
+                        Отмена
+                      </button>
+                    </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block">
-                      <span className="text-sm text-text-secondary">Дата</span>
-                      <input
-                        type="date"
+                      <span className="text-sm text-text-secondary">Дата (ДД.ММ.ГГГГ)</span>
+                      <DateInputRu
                         value={form.date}
-                        onChange={(e) => setField('date', e.target.value)}
+                        onChange={(iso: string) => setField('date', iso)}
                         className="mt-1 w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                       />
                     </label>
                     <label className="block">
-                      <span className="text-sm text-text-secondary">Партия / поставка</span>
+                      <span className="text-sm text-text-secondary">Номер партии</span>
                       <input
                         type="text"
                         value={form.batch}
@@ -277,7 +424,7 @@ export default function ProductionPage() {
                       className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
                     >
                       <Check className="w-4 h-4" />
-                      Сохранить анализ
+                      {editingAnalysisId ? 'Сохранить изменения' : 'Сохранить анализ'}
                     </button>
                   </div>
                 </form>
@@ -301,7 +448,7 @@ export default function ProductionPage() {
                     <tbody>
                       {analyses.map((a) => (
                         <tr key={a.id} className="border-b border-border hover:bg-surface-hover transition-colors">
-                          <td className="py-2.5 px-4 text-text-primary">{a.date}</td>
+                          <td className="py-2.5 px-4 text-text-primary">{formatDateRu(a.date)}</td>
                           <td className="py-2.5 px-4 text-text-primary">{a.batch || '—'}</td>
                           <td className="py-2.5 px-4 text-text-primary">{a.temperature || '—'}</td>
                           <td className="py-2.5 px-4 text-text-primary">{a.fat || '—'}</td>
@@ -337,8 +484,22 @@ export default function ProductionPage() {
 
           {activeTab === 'registration' && (
             <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <span className="text-sm text-text-muted">Зарегистрированные поступления молока</span>
+                <button
+                  type="button"
+                  disabled={registrations.length === 0}
+                  title={
+                    registrations.length === 0
+                      ? 'Нет строк для выгрузки'
+                      : 'Скачать таблицу в Excel (.xlsx)'
+                  }
+                  onClick={() => downloadMilkRegistrationsExcel(registrations, analyses)}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary shadow-sm transition-colors hover:bg-surface-secondary hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Скачать
+                </button>
               </div>
 
               {registrations.length === 0 ? (
@@ -348,7 +509,10 @@ export default function ProductionPage() {
                       Пока нет зарегистрированных поступлений. Ниже пример того, как может выглядеть одна запись:
                     </p>
                     <div className="inline-block rounded-lg border border-border bg-surface-secondary px-4 py-3 text-left text-xs text-text-secondary space-y-1">
-                      <p><span className="font-semibold text-text-primary">Дата:</span> 2026-03-10</p>
+                      <p>
+                        <span className="font-semibold text-text-primary">Дата:</span>{' '}
+                        {formatDateRu('2026-03-10')}
+                      </p>
                       <p><span className="font-semibold text-text-primary">Поставщик:</span> МетаКом</p>
                       <p><span className="font-semibold text-text-primary">Вид молока:</span> коровье</p>
                       <p><span className="font-semibold text-text-primary">Кол-во, л / кг:</span> 1200 / 1236,00</p>
@@ -361,6 +525,7 @@ export default function ProductionPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border bg-surface-secondary">
+                        <th className="text-left py-3 px-4 font-medium text-text-secondary">№ рег.</th>
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Дата</th>
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Поставщик</th>
                         <th className="text-left py-3 px-4 font-medium text-text-secondary">Вид молока</th>
@@ -376,8 +541,23 @@ export default function ProductionPage() {
                           ? analyses.find((a) => a.id === r.analysisId)
                           : undefined;
                         return (
-                          <tr key={r.id} className="border-b border-border hover:bg-surface-hover transition-colors">
-                            <td className="py-2.5 px-4 text-text-primary">{r.date}</td>
+                          <tr
+                            key={r.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setRegistrationToView(r)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setRegistrationToView(r);
+                              }
+                            }}
+                            className="border-b border-border hover:bg-surface-hover transition-colors cursor-pointer"
+                          >
+                            <td className="py-2.5 px-4 text-text-primary whitespace-nowrap font-mono text-xs">
+                              {r.registrationNumber || '—'}
+                            </td>
+                            <td className="py-2.5 px-4 text-text-primary">{formatDateRu(r.date)}</td>
                             <td className="py-2.5 px-4 text-text-primary">{r.supplier || '—'}</td>
                             <td className="py-2.5 px-4 text-text-primary">{r.milkType || '—'}</td>
                             <td className="py-2.5 px-4 text-text-primary">{r.liters || '—'}</td>
@@ -389,7 +569,10 @@ export default function ProductionPage() {
                               {linkedAnalysis ? (
                                 <button
                                   type="button"
-                                  onClick={() => setAnalysisToView(linkedAnalysis)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setAnalysisToView(linkedAnalysis);
+                                  }}
                                   className="inline-flex items-center gap-1 rounded-full bg-amber-400 hover:bg-amber-500 px-3 py-1 text-xs font-medium text-white shadow-sm transition-colors"
                                 >
                                   Анализ
@@ -397,9 +580,13 @@ export default function ProductionPage() {
                               ) : (
                                 <button
                                   type="button"
-                                  onClick={() => {
+                                  disabled={!canEditProduction}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!canEditProduction) return;
                                     setActiveTab('analysis');
                                     setIsFormOpen(true);
+                                    setEditingAnalysisId(undefined);
                                     setAnalysisRegistrationId(r.id);
                                     setForm((prev) => ({
                                       ...prev,
@@ -409,7 +596,7 @@ export default function ProductionPage() {
                                         : prev.batch,
                                     }));
                                   }}
-                                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 text-xs font-medium shadow-sm transition-colors"
+                                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:text-slate-600 disabled:cursor-not-allowed text-white px-3 py-1.5 text-xs font-medium shadow-sm transition-colors"
                                 >
                                   Анализ
                                 </button>
@@ -425,11 +612,15 @@ export default function ProductionPage() {
               <div className="flex justify-center pt-4">
                 <button
                   type="button"
+                  disabled={!canEditProduction}
                   onClick={() => {
-                    setIsRegistrationModalOpen(true);
+                    if (!canEditProduction) return;
                     setRegistrationAnalysisId(undefined);
+                    setEditingRegistrationId(undefined);
+                    resetRegistrationFormFields(registrations);
+                    setIsRegistrationModalOpen(true);
                   }}
-                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
+                  className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-slate-300 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   Зарегистрировать поступление
@@ -438,26 +629,84 @@ export default function ProductionPage() {
             </div>
           )}
 
-          {isRegistrationModalOpen && (
+          {isRegistrationModalOpen && canEditProduction && (
             <div className="fixed inset-y-0 left-[260px] right-0 z-50 flex items-center justify-center bg-black/40">
               <div className="w-full max-w-lg rounded-xl bg-surface border border-border shadow-xl">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-                  <h3 className="text-base font-semibold text-text-primary">Регистрация поступления молока</h3>
-                  <button
-                    type="button"
-                    className="text-sm text-text-muted hover:text-text-primary"
-                    onClick={() => setIsRegistrationModalOpen(false)}
-                  >
-                    Закрыть
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 border-b border-border">
+                  <h3 className="text-base font-semibold text-text-primary">
+                    {editingRegistrationId
+                      ? 'Редактирование поступления молока'
+                      : 'Регистрация поступления молока'}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={!editingRegistrationId}
+                      title={
+                        editingRegistrationId
+                          ? 'Вернуть значения из сохранённой записи'
+                          : 'Откройте карточку поступления и нажмите «Редактировать»'
+                      }
+                      onClick={() => {
+                        if (!editingRegistrationId) return;
+                        const row = registrations.find((x) => x.id === editingRegistrationId);
+                        if (row) loadRegistrationIntoForm(row);
+                      }}
+                      className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Редактировать
+                    </button>
+                    <button
+                      type="button"
+                      className="text-sm text-text-muted hover:text-text-primary"
+                      onClick={() => {
+                        setIsRegistrationModalOpen(false);
+                        setEditingRegistrationId(undefined);
+                        resetRegistrationFormFields(registrations);
+                      }}
+                    >
+                      Закрыть
+                    </button>
+                  </div>
                 </div>
                 <form
                   className="px-5 py-4 space-y-4"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    setRegistrations((prev) => [
-                      {
+                    if (editingRegistrationId) {
+                      const existing = registrations.find((r) => r.id === editingRegistrationId);
+                      const regNum =
+                        registrationNumber.trim() ||
+                        existing?.registrationNumber ||
+                        getNextRegistrationNumber(
+                          registrations.filter((r) => r.id !== editingRegistrationId),
+                        );
+                      const nextRegs = registrations.map((r) =>
+                        r.id === editingRegistrationId
+                          ? {
+                              ...r,
+                              batchNumber: registrationBatchNumber,
+                              registrationNumber: regNum,
+                              date: registrationDate,
+                              supplier: registrationSupplier,
+                              milkType: registrationMilkType,
+                              liters: registrationLiters,
+                              kg: registrationKg,
+                              docsNote: registrationDocsNote,
+                            }
+                          : r,
+                      );
+                      setRegistrations(nextRegs);
+                      resetRegistrationFormFields(nextRegs);
+                      setEditingRegistrationId(undefined);
+                    } else {
+                      const regNum =
+                        registrationNumber.trim() || getNextRegistrationNumber(registrations);
+                      const newItem: MilkRegistration = {
                         id: crypto.randomUUID(),
+                        batchNumber: registrationBatchNumber,
+                        registrationNumber: regNum,
                         date: registrationDate,
                         supplier: registrationSupplier,
                         milkType: registrationMilkType,
@@ -465,9 +714,11 @@ export default function ProductionPage() {
                         kg: registrationKg,
                         docsNote: registrationDocsNote,
                         analysisId: registrationAnalysisId,
-                      },
-                      ...prev,
-                    ]);
+                      };
+                      const nextRegs = [newItem, ...registrations];
+                      setRegistrations(nextRegs);
+                      resetRegistrationFormFields(nextRegs);
+                    }
                     setIsRegistrationModalOpen(false);
                     setRegistrationAnalysisId(undefined);
                     setActiveTab('registration');
@@ -475,11 +726,19 @@ export default function ProductionPage() {
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block">
-                      <span className="text-sm text-text-secondary">Дата</span>
+                      <span className="text-sm text-text-secondary">Номер партии</span>
                       <input
-                        type="date"
+                        type="text"
+                        value={registrationBatchNumber}
+                        onChange={(e) => setRegistrationBatchNumber(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-text-secondary">Дата (ДД.ММ.ГГГГ)</span>
+                      <DateInputRu
                         value={registrationDate}
-                        onChange={(e) => setRegistrationDate(e.target.value)}
+                        onChange={setRegistrationDate}
                         className="mt-1 w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                       />
                     </label>
@@ -495,6 +754,19 @@ export default function ProductionPage() {
                         <option value="Волга">Волга</option>
                         <option value="Волга + МетаКом">Волга + МетаКом</option>
                       </select>
+                    </label>
+                    <label className="block">
+                      <span className="text-sm text-text-secondary">Номер регистрации</span>
+                      <p className="mt-0.5 text-xs text-text-muted leading-snug">
+                        Внутренний учётный номер поступления в журнале приёмки; подставляется
+                        автоматически (формат РМ-000001). При необходимости можно исправить вручную.
+                      </p>
+                      <input
+                        type="text"
+                        value={registrationNumber}
+                        onChange={(e) => setRegistrationNumber(e.target.value)}
+                        className="mt-1 w-full px-3 py-2 text-sm bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                      />
                     </label>
                   </div>
 
@@ -547,7 +819,11 @@ export default function ProductionPage() {
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
-                      onClick={() => setIsRegistrationModalOpen(false)}
+                      onClick={() => {
+                        setIsRegistrationModalOpen(false);
+                        setEditingRegistrationId(undefined);
+                        resetRegistrationFormFields(registrations);
+                      }}
                       className="px-4 py-2 text-sm rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
                     >
                       Отмена
@@ -556,7 +832,7 @@ export default function ProductionPage() {
                       type="submit"
                       className="px-4 py-2 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors"
                     >
-                      Сохранить
+                      {editingRegistrationId ? 'Сохранить изменения' : 'Сохранить'}
                     </button>
                   </div>
                 </form>
@@ -583,7 +859,7 @@ export default function ProductionPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="text-text-secondary">Дата анализа</div>
-                  <div className="font-medium text-text-primary">{analysisToView.date || '—'}</div>
+                  <div className="font-medium text-text-primary">{formatDateRu(analysisToView.date)}</div>
                 </div>
                 <div>
                   <div className="text-text-secondary">Партия / поставка</div>
@@ -621,10 +897,150 @@ export default function ProductionPage() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
+            <div className="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-border">
+              {canEditProduction && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const a = analysisToView;
+                    setForm({
+                      date: a.date,
+                      batch: a.batch ?? '',
+                      temperature: a.temperature,
+                      fat: a.fat,
+                      ph: a.ph,
+                      protein: a.protein,
+                      organoleptic: a.organoleptic,
+                      passed: a.passed,
+                    });
+                    setEditingAnalysisId(a.id);
+                    setAnalysisRegistrationId(a.registrationId);
+                    setAnalysisToView(null);
+                    setActiveTab('analysis');
+                    setIsFormOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Редактировать
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setAnalysisToView(null)}
+                className="px-4 py-2 text-sm rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {registrationToView && (
+        <div
+          className="fixed inset-y-0 left-[260px] right-0 z-50 flex items-center justify-center bg-black/40"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="registration-view-title"
+        >
+          <div className="w-full max-w-lg rounded-xl bg-surface border border-border shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3
+                id="registration-view-title"
+                className="text-base font-semibold text-text-primary"
+              >
+                Регистрация поступления
+              </h3>
+              <button
+                type="button"
+                className="text-sm text-text-muted hover:text-text-primary"
+                onClick={() => setRegistrationToView(null)}
+              >
+                Закрыть
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-text-secondary">Номер регистрации</div>
+                  <div className="font-medium text-text-primary font-mono text-xs">
+                    {registrationToView.registrationNumber || '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Номер партии</div>
+                  <div className="font-medium text-text-primary">
+                    {registrationToView.batchNumber || '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Дата</div>
+                  <div className="font-medium text-text-primary">
+                    {formatDateRu(registrationToView.date)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Поставщик</div>
+                  <div className="font-medium text-text-primary">
+                    {registrationToView.supplier || '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Вид молока</div>
+                  <div className="font-medium text-text-primary">
+                    {registrationToView.milkType || '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-text-secondary">Количество, л / кг</div>
+                  <div className="font-medium text-text-primary">
+                    {[registrationToView.liters || '—', registrationToView.kg || '—'].join(' / ')}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="text-text-secondary">Сканы документов</div>
+                <div className="font-medium text-text-primary break-words">
+                  {registrationToView.docsNote || '—'}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-border">
+              {(() => {
+                const aid = registrationToView.analysisId;
+                const regAnalysis = aid ? analyses.find((a) => a.id === aid) : undefined;
+                return regAnalysis ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRegistrationToView(null);
+                      setAnalysisToView(regAnalysis);
+                    }}
+                    className="px-4 py-2 text-sm rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-medium transition-colors"
+                  >
+                    Результаты анализа
+                  </button>
+                ) : null;
+              })()}
+              {canEditProduction && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    loadRegistrationIntoForm(registrationToView);
+                    setEditingRegistrationId(registrationToView.id);
+                    setRegistrationToView(null);
+                    setIsRegistrationModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Редактировать
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setRegistrationToView(null)}
                 className="px-4 py-2 text-sm rounded-lg border border-border text-text-secondary hover:bg-surface-secondary transition-colors"
               >
                 Закрыть

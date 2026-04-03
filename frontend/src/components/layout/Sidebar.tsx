@@ -87,7 +87,7 @@ export default function Sidebar({ className = '' }: SidebarProps) {
         <div className="h-px bg-white/10 my-3 mx-2" />
 
         {/* Module links */}
-        {MODULES.map((mod) => {
+        {MODULES.filter((mod) => user.allowedModules.includes(mod.key)).map((mod) => {
           const Icon = ICON_MAP[mod.icon] || Package;
 
           return (

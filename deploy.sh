@@ -4,6 +4,7 @@ set -euo pipefail
 DOMAIN="ooo-druzhba.ru"
 WEB_ROOT="/var/www/${DOMAIN}/html"
 BACKEND_BIN="/opt/ooozhruzhbaplatform/bin/ooozhruzhbaplatform-backend"
+BACKEND_DATA_DIR="/opt/ooozhruzhbaplatform/data"
 SERVICE="ooozhruzhbaplatform-backend.service"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,7 +25,11 @@ cp -a "${SCRIPT_DIR}/frontend/dist/." "${WEB_ROOT}/"
 
 echo "== Build backend (Go) =="
 cd "${SCRIPT_DIR}/backend"
-GO111MODULE=off go build -o "${BACKEND_BIN}" ./cmd/server
+go build -o "${BACKEND_BIN}" ./cmd/server
+
+echo "== Prepare backend data dir =="
+${SUDO} mkdir -p "${BACKEND_DATA_DIR}"
+${SUDO} chown -R www-data:www-data "${BACKEND_DATA_DIR}"
 
 echo "== Restart backend service =="
 ${SUDO} systemctl restart "${SERVICE}"

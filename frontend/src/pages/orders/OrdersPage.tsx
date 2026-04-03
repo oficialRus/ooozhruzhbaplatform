@@ -2,6 +2,8 @@ import { useState, useMemo, Fragment } from 'react';
 import { ClipboardList, Plus, Search, Filter, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Order } from '@/types';
 import NewOrderModal from './NewOrderModal';
+import { useAuth } from '@/context/AuthContext';
+import { formatDateRu } from '@/utils/dateFormat';
 
 function groupOrdersByDateAndClient(orders: Order[]): { key: string; registrationDate: string; clientName: string; orders: Order[] }[] {
   const map = new Map<string, Order[]>();
@@ -26,6 +28,8 @@ const STATUS_LABELS: Record<Order['status'], string> = {
 };
 
 export default function OrdersPage() {
+  const { canEditModule } = useAuth();
+  const canEditOrders = canEditModule('orders');
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,16 +67,26 @@ export default function OrdersPage() {
         </div>
         <button
           type="button"
-          onClick={() => setIsNewOrderOpen(true)}
-          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2.5 rounded-lg transition-colors text-sm"
+          onClick={() => {
+            if (!canEditOrders) return;
+            setIsNewOrderOpen(true);
+          }}
+          disabled={!canEditOrders}
+          className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 disabled:bg-primary-300 text-white font-medium px-4 py-2.5 rounded-lg transition-colors text-sm"
         >
           <Plus className="w-4 h-4" />
           Новый заказ
         </button>
       </div>
 
+      {!canEditOrders && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          У вас режим чтения в разделе «Коммерческие заказы». Создание и редактирование заказов недоступно.
+        </div>
+      )}
+
       <NewOrderModal
-        isOpen={isNewOrderOpen}
+        isOpen={isNewOrderOpen && canEditOrders}
         onClose={() => setIsNewOrderOpen(false)}
         onOrderCreated={(order) => setOrders((prev) => [order, ...prev])}
       />
@@ -143,7 +157,9 @@ export default function OrdersPage() {
                       >
                         <td className="py-3 px-4 text-text-muted">—</td>
                         <td className="py-3 px-4 text-text-muted">—</td>
-                        <td className="py-3 px-4 text-text-primary">{group.registrationDate || '—'}</td>
+                        <td className="py-3 px-4 text-text-primary">
+                          {formatDateRu(group.registrationDate)}
+                        </td>
                         <td className="py-3 px-4 text-text-primary font-medium">{group.clientName || '—'}</td>
                         <td className="py-3 px-4 text-text-secondary" colSpan={3}>
                           <span className="inline-flex items-center gap-1.5">

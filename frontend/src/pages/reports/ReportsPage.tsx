@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { MODULES } from '@/config/modules';
+import { formatDateRuWeekdayDayMonth } from '@/utils/dateFormat';
 import {
   StatCard,
   ModuleCard,
@@ -191,13 +192,7 @@ export default function ReportsPage() {
             <CheckCircle2 className="w-4 h-4" />
             Все системы работают
           </div>
-          <div className="text-sm text-text-muted">
-            {new Date().toLocaleDateString('ru-RU', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-          </div>
+          <div className="text-sm text-text-muted">{formatDateRuWeekdayDayMonth()}</div>
         </div>
       </div>
 
